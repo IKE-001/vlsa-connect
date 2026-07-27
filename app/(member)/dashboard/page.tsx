@@ -12,7 +12,7 @@ import { useSavings } from "@/hooks/useSavings";
 import { useLoans } from "@/hooks/useLoans";
 import { useMeetings } from "@/hooks/useMeetings";
 import { useGroup } from "@/hooks/useGroup";
-import { setActiveGroupId } from "@/lib/api/client";
+import { setActiveGroupId, api } from "@/lib/api/client";
 
 function getStoredGroupId(): string {
   if (typeof window === "undefined") return "";
@@ -51,7 +51,7 @@ function MemberDashboardWithGroup({
   groupId: string;
   profile: ReturnType<typeof useProfile>['profile'];
 }) {
-  const { groupName, members, group, groupHealth } = useGroup(groupId);
+  const { groupName, members, group, groupHealth, refresh } = useGroup(groupId);
   const myMember = members.find((m) => m.userId === profile?.userId);
   const myMemberId = myMember?.id;
   const myRole = myMember?.roleInGroup ?? 'MEMBER';
@@ -62,6 +62,12 @@ function MemberDashboardWithGroup({
 
   const pendingLoans = loans.filter((l) => l.status === 'PENDING');
   const isGovernanceRole = myRole === 'CHAIRPERSON' || myRole === 'TREASURER' || myRole === 'SECRETARY';
+  const isChairperson = myRole === 'CHAIRPERSON';
+
+  const handleUpdateRole = async (memberId: string, role: string) => {
+    await api.patch(`/api/groups/${groupId}/members/${memberId}/role`, { role });
+    await refresh();
+  };
 
   // Governance widgets are shown to Chairperson, Treasurer, and Secretary
   const governanceWidgets = isGovernanceRole ? (
@@ -77,12 +83,14 @@ function MemberDashboardWithGroup({
       <GroupDirectory
         members={members.map((m) => ({
           id: m.id,
-          name: m.fullName,
-          phone: m.phoneNumber,
-          role: m.roleInGroup,
+          fullName: m.fullName,
+          phoneNumber: m.phoneNumber,
+          roleInGroup: m.roleInGroup,
           avatarUrl: m.avatarUrl,
           email: null,
         }))}
+        isChairperson={isChairperson}
+        onUpdateRole={handleUpdateRole}
       />
       <UpcomingMeetings
         meetings={meetings}
