@@ -24,7 +24,7 @@ const navItems: NavItemData[] = [
   { label: "Notifications", icon: "bell",             href: "/notifications" },
   { label: "AI Assistant",  icon: "sparkle",          href: "/ai-assistant" },
   { label: "Profile",       icon: "user",             href: "/profile" },
-  { label: "Support",       icon: "support",          href: "#" },
+  { label: "Support",       icon: "support",          href: "/profile/support" },
 ];
 
 interface MemberSidebarProps {

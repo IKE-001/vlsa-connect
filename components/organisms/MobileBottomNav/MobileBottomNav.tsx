@@ -54,56 +54,69 @@ export const MobileBottomNav: React.FC = () => {
           />
           
           {/* Menu Content */}
-          <div className="relative bg-white w-full rounded-t-[28px] sm:rounded-[24px] sm:w-[320px] pb-28 pt-8 px-6 shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-300 ease-out">
+          <div className="relative bg-white w-full rounded-t-[28px] sm:rounded-[24px] sm:w-[360px] pb-28 pt-8 px-6 shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-300 ease-out">
             <div className="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-[#EBEFED] rounded-full sm:hidden" />
             
-            <h3 className="text-[18px] font-extrabold text-[#1B2321] mb-6 text-center">More Actions</h3>
+            <h3 className="text-[18px] font-extrabold text-[#1B2321] mb-6 text-center">More Options &amp; Features</h3>
             
-            <div className="grid grid-cols-4 gap-y-7 gap-x-2">
-              <Link href="/my-group" className="flex flex-col items-center gap-2.5 group">
-                <div className="w-[50px] h-[50px] rounded-[16px] bg-[#F1F4F2] text-[#1B2321] flex items-center justify-center group-active:scale-95 transition-all shadow-sm group-hover:bg-[#E3F3EA] group-hover:text-[#2D7A52]">
-                  <Icon name="users" className="w-[24px] h-[24px]" />
+            <div className="grid grid-cols-4 gap-y-6 gap-x-2">
+              <Link href="/my-group" className="flex flex-col items-center gap-2 group">
+                <div className="w-[48px] h-[48px] rounded-[16px] bg-[#F1F4F2] text-[#1B2321] flex items-center justify-center group-active:scale-95 transition-all shadow-xs group-hover:bg-[#E3F3EA] group-hover:text-[#2D7A52]">
+                  <Icon name="users" className="w-[22px] h-[22px]" />
                 </div>
-                <span className="text-[11px] font-bold text-[#5B6B65] text-center leading-tight">My Group</span>
+                <span className="text-[10.5px] font-bold text-[#5B6B65] text-center leading-tight">My Group</span>
               </Link>
 
-              <Link href="/contributions" className="flex flex-col items-center gap-2.5 group">
-                <div className="w-[50px] h-[50px] rounded-[16px] bg-[#E3F3EA] text-[#2D7A52] flex items-center justify-center group-active:scale-95 transition-all shadow-sm">
-                  <Icon name="arrow-down-circle" className="w-[24px] h-[24px]" />
+              <Link href="/contributions" className="flex flex-col items-center gap-2 group">
+                <div className="w-[48px] h-[48px] rounded-[16px] bg-[#E3F3EA] text-[#2D7A52] flex items-center justify-center group-active:scale-95 transition-all shadow-xs">
+                  <Icon name="arrow-down-circle" className="w-[22px] h-[22px]" />
                 </div>
-                <span className="text-[11px] font-bold text-[#5B6B65] text-center leading-tight">Contributions</span>
+                <span className="text-[10.5px] font-bold text-[#5B6B65] text-center leading-tight">Contributions</span>
               </Link>
               
-              <Link href="/withdrawals" className="flex flex-col items-center gap-2.5 group relative">
-                <div className="w-[50px] h-[50px] rounded-[16px] bg-[#FCEAE9] text-[#DC4B3F] flex items-center justify-center group-active:scale-95 transition-all shadow-sm">
-                  <Icon name="arrow-up-circle" className="w-[24px] h-[24px]" />
+              <Link href="/withdrawals" className="flex flex-col items-center gap-2 group">
+                <div className="w-[48px] h-[48px] rounded-[16px] bg-[#FCEAE9] text-[#DC4B3F] flex items-center justify-center group-active:scale-95 transition-all shadow-xs">
+                  <Icon name="arrow-up-circle" className="w-[22px] h-[22px]" />
                 </div>
-                <span className="text-[11px] font-bold text-[#5B6B65] text-center leading-tight">Withdrawals</span>
-                <span className="absolute -top-1.5 right-1 bg-[#E8873A] border-2 border-white text-white text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center shadow-sm">2</span>
+                <span className="text-[10.5px] font-bold text-[#5B6B65] text-center leading-tight">Withdrawals</span>
               </Link>
 
-              <Link href="/documents" className="flex flex-col items-center gap-2.5 group">
-                <div className="w-[50px] h-[50px] rounded-[16px] bg-[#FCEADC] text-[#E8873A] flex items-center justify-center group-active:scale-95 transition-all shadow-sm">
-                  <Icon name="doc" className="w-[24px] h-[24px]" />
+              <Link href="/messages" className="flex flex-col items-center gap-2 group">
+                <div className="w-[48px] h-[48px] rounded-[16px] bg-[#E6EEFA] text-[#4A7FC1] flex items-center justify-center group-active:scale-95 transition-all shadow-xs">
+                  <Icon name="chat" className="w-[22px] h-[22px]" />
                 </div>
-                <span className="text-[11px] font-bold text-[#5B6B65] text-center leading-tight">Documents</span>
+                <span className="text-[10.5px] font-bold text-[#5B6B65] text-center leading-tight">Messages</span>
               </Link>
 
-              <Link href="/notifications" className="flex flex-col items-center gap-2.5 group relative">
-                <div className="w-[50px] h-[50px] rounded-[16px] bg-[#E3F3EA] text-[#2D7A52] flex items-center justify-center group-active:scale-95 transition-all shadow-sm">
-                  <Icon name="bell" className="w-[24px] h-[24px]" />
+              <Link href="/documents" className="flex flex-col items-center gap-2 group">
+                <div className="w-[48px] h-[48px] rounded-[16px] bg-[#FCEADC] text-[#E8873A] flex items-center justify-center group-active:scale-95 transition-all shadow-xs">
+                  <Icon name="doc" className="w-[22px] h-[22px]" />
                 </div>
-                <span className="text-[11px] font-bold text-[#5B6B65] text-center leading-tight">Alerts</span>
+                <span className="text-[10.5px] font-bold text-[#5B6B65] text-center leading-tight">Documents</span>
+              </Link>
+
+              <Link href="/notifications" className="flex flex-col items-center gap-2 group relative">
+                <div className="w-[48px] h-[48px] rounded-[16px] bg-[#E3F3EA] text-[#2D7A52] flex items-center justify-center group-active:scale-95 transition-all shadow-xs">
+                  <Icon name="bell" className="w-[22px] h-[22px]" />
+                </div>
+                <span className="text-[10.5px] font-bold text-[#5B6B65] text-center leading-tight">Alerts</span>
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1.5 right-1 bg-[#E8873A] border-2 border-white text-white text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center shadow-sm">{unreadCount}</span>
+                  <span className="absolute -top-1.5 right-1 bg-[#E8873A] border-2 border-white text-white text-[9.5px] font-extrabold w-4.5 h-4.5 rounded-full flex items-center justify-center shadow-xs">{unreadCount}</span>
                 )}
               </Link>
 
-              <Link href="/ai-assistant" className="flex flex-col items-center gap-2.5 group">
-                <div className="w-[50px] h-[50px] rounded-[16px] bg-[#E8EFFD] text-[#2F6FED] flex items-center justify-center group-active:scale-95 transition-all shadow-sm">
-                  <Icon name="sparkle" className="w-[24px] h-[24px]" />
+              <Link href="/ai-assistant" className="flex flex-col items-center gap-2 group">
+                <div className="w-[48px] h-[48px] rounded-[16px] bg-[#E8EFFD] text-[#2F6FED] flex items-center justify-center group-active:scale-95 transition-all shadow-xs">
+                  <Icon name="sparkle" className="w-[22px] h-[22px]" />
                 </div>
-                <span className="text-[11px] font-bold text-[#5B6B65] text-center leading-tight">AI Help</span>
+                <span className="text-[10.5px] font-bold text-[#5B6B65] text-center leading-tight">AI Help</span>
+              </Link>
+
+              <Link href="/profile/support" className="flex flex-col items-center gap-2 group">
+                <div className="w-[48px] h-[48px] rounded-[16px] bg-[#F1ECFE] text-[#8B5CF6] flex items-center justify-center group-active:scale-95 transition-all shadow-xs">
+                  <Icon name="support" className="w-[22px] h-[22px]" />
+                </div>
+                <span className="text-[10.5px] font-bold text-[#5B6B65] text-center leading-tight">Support</span>
               </Link>
             </div>
           </div>
