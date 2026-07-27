@@ -43,8 +43,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: parsed.error.flatten() }, { status: 400 });
     }
 
-    // If memberId provided, return balance; otherwise return history list.
-    if (parsed.data.memberId) {
+    // If action is explicitly 'balance', return balance object
+    if (parsed.data.action === 'balance' && parsed.data.memberId) {
       const balance = await handleGetBalance({
         memberId: parsed.data.memberId,
         groupId: parsed.data.groupId,
@@ -52,6 +52,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(balance, { status: 200 });
     }
 
+    // Otherwise (or if action is 'history'), return the history list
     const history = await handleGetHistory(parsed.data);
     return NextResponse.json(history, { status: 200 });
   } catch (err) {

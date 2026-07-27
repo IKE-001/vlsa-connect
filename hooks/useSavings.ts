@@ -41,20 +41,26 @@ export function useSavings({ groupId, memberId }: UseSavingsOptions) {
       if (memberId) params.set('memberId', memberId);
 
       if (memberId) {
-        // Returns balance object
-        const balance = await api.get<{ totalSavedTambala: number; memberId: string }>(
-          `/api/savings?${params}`
-        );
-        setState((s) => ({
-          ...s,
+        // Fetch both balance and history in parallel
+        const [balance, historyData] = await Promise.all([
+          api.get<{ totalSavedTambala: number; memberId: string }>(
+            `/api/savings?${params.toString()}&action=balance`
+          ),
+          api.get<{ items: ContributionRecord[]; total: number }>(
+            `/api/savings?${params.toString()}&action=history`
+          )
+        ]);
+
+        setState({
+          contributions: historyData.items ?? [],
           balanceTambala: balance.totalSavedTambala,
           isLoading: false,
           error: null,
-        }));
+        });
       } else {
-        // Returns paginated contribution list
+        // Returns paginated contribution list for all members
         const data = await api.get<{ items: ContributionRecord[]; total: number }>(
-          `/api/savings?${params}`
+          `/api/savings?${params.toString()}`
         );
         setState({
           contributions: data.items ?? [],

@@ -33,10 +33,10 @@ export const ApproveContributionSchema = z.object({
 
 export type ApproveContributionInput = z.infer<typeof ApproveContributionSchema>;
 
-/** GET /api/savings — query params for balance / history */
 export const GetSavingsQuerySchema = z.object({
   groupId: z.string().uuid(),
   memberId: z.string().uuid().optional(),
+  action: z.enum(['balance', 'history']).optional(),
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().positive().max(100).default(20),
 });
