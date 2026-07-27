@@ -1,8 +1,8 @@
 import { getCallerUserId } from '@/lib/utils/getCallerUserId';
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { SupportController } from "@/controllers/support/support.controller";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const userId = await getCallerUserId(req);
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
     const userId = await getCallerUserId(req);
     const role = req.headers.get('x-caller-platform-role') || 'MEMBER';
