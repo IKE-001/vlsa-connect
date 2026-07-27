@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Icon } from "@/components/atoms/Icon/Icon";
 import { MemberSidebar } from "@/components/organisms/MemberSidebar/MemberSidebar";
 import { Input } from "@/components/atoms/Input/Input";
@@ -17,6 +17,12 @@ export interface MemberChatTemplateProps {
   onSendMessage: (body: string, mediaUrl?: string, mediaType?: "image" | "document") => Promise<void>;
 }
 
+interface PendingAttachment {
+  file: File;
+  previewUrl: string;   // object URL for images, empty string for docs
+  mediaType: "image" | "document";
+}
+
 export const MemberChatTemplate: React.FC<MemberChatTemplateProps> = ({
   messages,
   isSending,
@@ -27,48 +33,83 @@ export const MemberChatTemplate: React.FC<MemberChatTemplateProps> = ({
   const [activeChannel, setActiveChannel] = useState("Group Announcements");
   const [inputMsg, setInputMsg] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  // Bug 2 fix: pending attachment preview state
+  const [pending, setPending] = useState<PendingAttachment | null>(null);
 
-  const handleSend = async () => {
-    if (!inputMsg.trim() || isSending) return;
-    await onSendMessage(inputMsg.trim());
-    setInputMsg("");
-  };
+  const docInputRef  = useRef<HTMLInputElement>(null);
+  const imgInputRef  = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, mediaType: "image" | "document") => {
+  // Bug 2 fix: pick file → show preview, don't upload yet
+  const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>, mediaType: "image" | "document") => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
+    // Revoke previous object URL to avoid memory leaks
+    if (pending?.previewUrl) URL.revokeObjectURL(pending.previewUrl);
 
-      const res = await fetch("/api/media/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.error || "Failed to upload file");
-      }
-
-      await onSendMessage("", json.url, mediaType);
-    } catch (err) {
-      console.error("Upload error:", err);
-      alert("Failed to upload file. Please try again.");
-    } finally {
-      setIsUploading(false);
-      e.target.value = ''; // Reset input
-    }
+    const previewUrl = mediaType === "image" ? URL.createObjectURL(file) : "";
+    setPending({ file, previewUrl, mediaType });
+    setUploadError(null);
+    // Reset input so same file can be re-picked after removal
+    e.target.value = "";
   };
 
-  // Get initials from sender name
+  const removePending = () => {
+    if (pending?.previewUrl) URL.revokeObjectURL(pending.previewUrl);
+    setPending(null);
+    setUploadError(null);
+  };
+
+  // Bug 3 fix: handleSend uploads attachment first if pending, then sends
+  const handleSend = async () => {
+    const hasText = inputMsg.trim().length > 0;
+    const hasAttachment = !!pending;
+    // Block if nothing to send, or already in flight
+    if ((!hasText && !hasAttachment) || isSending || isUploading) return;
+
+    let mediaUrl: string | undefined;
+    let mediaType: "image" | "document" | undefined;
+
+    if (pending) {
+      setIsUploading(true);
+      setUploadError(null);
+      try {
+        const formData = new FormData();
+        formData.append("file", pending.file);
+        const res = await fetch("/api/media/upload", { method: "POST", body: formData });
+        const json = await res.json();
+
+        if (!res.ok || !json.success) {
+          // Bug 1 fix: show inline error, don't just console.error
+          throw new Error(json.error || "Upload failed");
+        }
+        mediaUrl  = json.url;
+        mediaType = pending.mediaType;
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Failed to upload. Try again.";
+        setUploadError(msg);
+        setIsUploading(false);
+        return; // Don't send if upload failed
+      } finally {
+        setIsUploading(false);
+      }
+    }
+
+    await onSendMessage(inputMsg.trim(), mediaUrl, mediaType);
+    setInputMsg("");
+    if (pending?.previewUrl) URL.revokeObjectURL(pending.previewUrl);
+    setPending(null);
+    setUploadError(null);
+  };
+
   const getInitials = (name: string) =>
     (name || "User").split(" ").filter(Boolean).map((n) => n[0]).join("").substring(0, 2).toUpperCase();
 
   const THEMES = ["green", "blue", "purple", "orange", "red"] as const;
   const getTheme = (id?: string) => THEMES[(id ?? "x").charCodeAt(0) % THEMES.length];
+
+  const busy = isSending || isUploading;
 
   return (
     <div className="min-h-screen bg-[#F1F4F2] font-sans antialiased flex flex-col md:flex-row">
@@ -138,32 +179,112 @@ export const MemberChatTemplate: React.FC<MemberChatTemplateProps> = ({
             })}
           </main>
 
-          <footer className="bg-white border-t border-[#E9EDEA] p-4 flex items-center gap-3 shrink-0">
-            <div className="flex items-center gap-1 shrink-0">
-              <label className="cursor-pointer text-[#94A29C] hover:text-[#5B6B65] transition-colors p-2" title="Attach Document">
-                <input type="file" onChange={(e) => handleFileUpload(e, "document")} className="hidden" accept=".pdf,.doc,.docx" disabled={isUploading || isSending} />
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-              </label>
-              <label className="cursor-pointer text-[#94A29C] hover:text-[#5B6B65] transition-colors p-2" title="Attach Photo">
-                <input type="file" onChange={(e) => handleFileUpload(e, "image")} className="hidden" accept="image/*" disabled={isUploading || isSending} />
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              </label>
+          {/* ── Compose area ── */}
+          <footer className="bg-white border-t border-[#E9EDEA] shrink-0">
+
+            {/* Bug 1 fix: inline upload error banner */}
+            {uploadError && (
+              <div className="mx-4 mt-3 flex items-center gap-2 rounded-[10px] px-3 py-2 text-[12px] bg-red-50 text-red-600 border border-red-200">
+                <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>
+                </svg>
+                {uploadError}
+                <button type="button" onClick={() => setUploadError(null)} className="ml-auto text-red-400 hover:text-red-600">✕</button>
+              </div>
+            )}
+
+            {/* Bug 2 fix: attachment preview strip */}
+            {pending && (
+              <div className="mx-4 mt-3 flex items-center gap-3 p-2.5 rounded-[12px] bg-[#F1F4F2] border border-[#E9EDEA]">
+                {pending.mediaType === "image" && pending.previewUrl ? (
+                  <img src={pending.previewUrl} alt="Preview" className="h-14 w-14 rounded-[8px] object-cover border border-[#E9EDEA]" />
+                ) : (
+                  <div className="flex h-14 w-14 items-center justify-center rounded-[8px] bg-[#E3F3EA]">
+                    <svg className="h-7 w-7 text-[#2D7A52]" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="truncate text-[12.5px] font-semibold text-[#1B2321]">{pending.file.name}</p>
+                  <p className="text-[11px] text-[#94A29C]">{(pending.file.size / 1024).toFixed(1)} KB · {pending.mediaType}</p>
+                </div>
+                {/* Remove attachment */}
+                <button
+                  type="button"
+                  onClick={removePending}
+                  className="shrink-0 rounded-full p-1 text-[#94A29C] hover:bg-[#E9EDEA] hover:text-[#5B6B65] transition-colors"
+                  title="Remove attachment"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            <div className="p-4 flex items-center gap-3">
+              {/* Bug 4 fix: use refs + pointer-events on label instead of disabled on input */}
+              <div className="flex items-center gap-1 shrink-0">
+                {/* Hidden file inputs */}
+                <input
+                  ref={docInputRef}
+                  type="file"
+                  onChange={(e) => handleFilePick(e, "document")}
+                  className="hidden"
+                  accept=".pdf,.doc,.docx"
+                />
+                <input
+                  ref={imgInputRef}
+                  type="file"
+                  onChange={(e) => handleFilePick(e, "image")}
+                  className="hidden"
+                  accept="image/*"
+                />
+                <button
+                  type="button"
+                  onClick={() => !busy && docInputRef.current?.click()}
+                  disabled={busy}
+                  className="cursor-pointer text-[#94A29C] hover:text-[#5B6B65] transition-colors p-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Attach Document"
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => !busy && imgInputRef.current?.click()}
+                  disabled={busy}
+                  className="cursor-pointer text-[#94A29C] hover:text-[#5B6B65] transition-colors p-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Attach Photo"
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                </button>
+              </div>
+
+              <Input
+                placeholder={`Message #${activeChannel}...`}
+                value={inputMsg}
+                onChange={(e) => setInputMsg(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+                theme="green"
+                fullWidth
+              />
+              <Button
+                theme="green"
+                onClick={handleSend}
+                disabled={busy || (!inputMsg.trim() && !pending)}
+              >
+                {isUploading ? "Uploading…" : isSending ? "Sending…" : "Send"}
+              </Button>
             </div>
-            <Input
-              placeholder={`Message #${activeChannel}...`}
-              value={inputMsg}
-              onChange={(e) => setInputMsg(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              theme="green"
-              fullWidth
-            />
-            <Button theme="green" onClick={handleSend} disabled={isSending || isUploading}>
-              {isSending || isUploading ? "…" : "Send"}
-            </Button>
           </footer>
         </div>
       </div>
     </div>
   );
 };
-
