@@ -11,7 +11,7 @@ interface NavItemData {
 const navItems: NavItemData[] = [
   { label: "Dashboard",          icon: "grid",         href: "/bank-officer/dashboard" },
   { label: "VSLA Portfolio",     icon: "users",        href: "/bank-officer/portfolio" },
-  { label: "Credit Approvals",   icon: "doc",          href: "/bank-officer/credit-approvals", badge: "4" },
+  { label: "Credit Approvals",   icon: "doc",          href: "/bank-officer/credit-approvals" },
   { label: "Deposits & Ledger",  icon: "wallet",       href: "/bank-officer/deposits" },
   { label: "Risk & Compliance",  icon: "shield-alert", href: "/bank-officer/risk" },
   { label: "Reports & Analytics",icon: "trending-up",  href: "/bank-officer/reports" },
@@ -20,9 +20,10 @@ const navItems: NavItemData[] = [
 
 interface BankerSidebarProps {
   activePath?: string;
+  pendingApprovalsCount?: number;
 }
 
-export const BankerSidebar: React.FC<BankerSidebarProps> = ({ activePath = "/bank-officer/dashboard" }) => {
+export const BankerSidebar: React.FC<BankerSidebarProps> = ({ activePath = "/bank-officer/dashboard", pendingApprovalsCount = 0 }) => {
   return (
     <aside className="w-[236px] shrink-0 bg-gradient-to-b from-[#0B1E3A] to-[#122A4D] text-white px-[14px] py-5 flex flex-col h-screen sticky top-0 overflow-y-auto">
       {/* Brand */}
@@ -54,9 +55,9 @@ export const BankerSidebar: React.FC<BankerSidebarProps> = ({ activePath = "/ban
             >
               <Icon name={item.icon} className="w-[16.5px] h-[16.5px] shrink-0" />
               <span>{item.label}</span>
-              {item.badge && (
+              {item.href === "/bank-officer/credit-approvals" && pendingApprovalsCount > 0 && (
                 <span className="ml-auto text-[10px] font-extrabold px-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-[#DC2626] text-white">
-                  {item.badge}
+                  {pendingApprovalsCount}
                 </span>
               )}
             </a>

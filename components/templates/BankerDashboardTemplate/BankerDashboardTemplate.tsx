@@ -29,7 +29,7 @@ export const BankerDashboardTemplate: React.FC<BankerDashboardTemplateProps> = (
     <div className="min-h-screen bg-[#F2F4F8] font-sans antialiased flex flex-col md:flex-row">
       {/* ===== DESKTOP SIDEBAR ===== */}
       <div className="hidden md:block">
-        <BankerSidebar />
+        <BankerSidebar pendingApprovalsCount={approvals.filter(a => a.status === 'pending').length} />
       </div>
 
       {/* ===== MAIN COLUMN ===== */}

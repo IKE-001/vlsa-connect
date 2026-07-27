@@ -25,7 +25,7 @@ export const BankerCreditApprovalsTemplate: React.FC<BankerCreditApprovalsTempla
 
   return (
     <div className="min-h-screen bg-[#F2F4F8] font-sans antialiased flex flex-col md:flex-row">
-      <div className="hidden md:block"><BankerSidebar activePath="/bank-officer/credit-approvals" /></div>
+      <div className="hidden md:block"><BankerSidebar activePath="/bank-officer/credit-approvals" pendingApprovalsCount={approvals.filter(a => a.status === 'pending').length} /></div>
       <div className="flex-1 min-w-0 flex flex-col pb-12">
 
         <header className="bg-white/90 backdrop-blur-md sticky top-0 z-20 border-b border-[#EBEEF4] px-6 py-4 flex items-center justify-between">
@@ -34,7 +34,7 @@ export const BankerCreditApprovalsTemplate: React.FC<BankerCreditApprovalsTempla
             <p className="text-[12.5px] text-[#5C6B85] mt-0.5 font-medium">Review and action group credit line requests</p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[12px] font-bold px-3 py-1.5 rounded-full bg-[#FDEAEA] text-[#DC2626] animate-pulse">3 Pending</span>
+            <span className="text-[12px] font-bold px-3 py-1.5 rounded-full bg-[#FDEAEA] text-[#DC2626] animate-pulse">{approvals.filter(a => a.status === 'pending').length} Pending</span>
           </div>
         </header>
 
