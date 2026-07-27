@@ -40,6 +40,7 @@ export const FloatingLandingChat = () => {
   const [position, setPosition] = useState({ x: 24, y: 24 }); // Offset from bottom right
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
 
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -75,6 +76,10 @@ FORMATTING: Your primary goal is to filter and provide precise, bite-sized answe
     e.preventDefault();
     setIsDragging(true);
     setDragOffset({
+      x: e.clientX,
+      y: e.clientY
+    });
+    setStartPos({
       x: e.clientX,
       y: e.clientY
     });
@@ -138,12 +143,38 @@ FORMATTING: Your primary goal is to filter and provide precise, bite-sized answe
     <>
       {/* Floating Button (when closed) */}
       {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 p-4 bg-[#0F4C36] hover:bg-[#0c3d2c] text-white rounded-full shadow-2xl hover:scale-105 transition-transform"
+        <div 
+          className="fixed z-50 cursor-grab active:cursor-grabbing touch-none flex flex-col items-center gap-2"
+          style={{
+            bottom: `${position.y}px`,
+            right: `${position.x}px`,
+          }}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={(e) => {
+            handlePointerUp(e);
+            // If we barely moved, treat it as a click to open
+            if (Math.abs(e.clientX - startPos.x) < 5 && Math.abs(e.clientY - startPos.y) < 5) {
+              setIsOpen(true);
+            }
+          }}
         >
-          <MessageSquare className="w-6 h-6" />
-        </button>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsClosed(true);
+            }} 
+            className="p-1 bg-white rounded-full shadow-md text-zinc-500 hover:text-red-500 no-drag -mb-1"
+            title="Remove AI Assistant"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <button
+            className="p-4 bg-[#0F4C36] hover:bg-[#0c3d2c] text-white rounded-full shadow-2xl hover:scale-105 transition-transform no-drag pointer-events-none"
+          >
+            <MessageSquare className="w-6 h-6" />
+          </button>
+        </div>
       )}
 
       {/* Chat Window */}

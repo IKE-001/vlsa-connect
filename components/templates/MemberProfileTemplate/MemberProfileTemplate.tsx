@@ -105,7 +105,7 @@ export const MemberProfileTemplate: React.FC<MemberProfileTemplateProps> = ({
 
           <h2 className="text-[20px] font-extrabold text-[#1B2321] mt-3">{fullName}</h2>
           <p className="text-[12.5px] text-[#5B6B65] mt-0.5">{groupName || "VSLA Group"} · {profile?.roleInGroup ?? profile?.platformRole ?? "Member"}</p>
-          <p className="text-[12px] font-mono text-[#94A29C] mt-1 bg-[#F1F4F2] px-3 py-1 rounded-full">{profile?.userId ? `ID: ${profile.userId.substring(0, 12)}` : "Loading…"}</p>
+          <p className="text-[12px] font-mono text-[#94A29C] mt-1 bg-[#F1F4F2] px-3 py-1 rounded-full">{profile?.userId ? `ID: ${profile?.userId?.substring(0, 12)}` : "Loading…"}</p>
         </div>
 
         {/* Settings List */}

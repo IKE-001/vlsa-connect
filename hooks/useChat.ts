@@ -53,7 +53,11 @@ export function useChat(groupId: string, limit = 50) {
         throw new Error(err?.error ?? 'Failed to fetch messages.');
       }
       const json = await res.json();
-      const msgs: ChatMessage[] = json.data ?? [];
+      const msgs: ChatMessage[] = (json.data ?? []).map((m: any) => ({
+        ...m,
+        senderName: m.sender?.fullName,
+        createdAt: m.sentAt ?? m.createdAt,
+      }));
       setState({ messages: msgs, isLoading: false, isSending: false, error: null });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to load messages.';
@@ -85,7 +89,12 @@ export function useChat(groupId: string, limit = 50) {
           throw new Error(err?.error ?? 'Failed to send message.');
         }
         const json = await res.json();
-        const newMsg: ChatMessage = json.data;
+        const newMsgRaw = json.data;
+        const newMsg: ChatMessage = {
+          ...newMsgRaw,
+          senderName: newMsgRaw.sender?.fullName,
+          createdAt: newMsgRaw.sentAt ?? newMsgRaw.createdAt,
+        };
         setState((s) => ({
           ...s,
           messages: [...s.messages, newMsg],

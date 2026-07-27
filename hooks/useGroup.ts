@@ -62,7 +62,12 @@ export function useGroup(groupId: string) {
       ]);
       setState({
         group,
-        members: group.members ?? [],
+        members: (group.members ?? []).map((m: any) => ({
+          ...m,
+          fullName: m.user?.fullName ?? 'Unknown Member',
+          avatarUrl: m.user?.avatarUrl ?? null,
+          phoneNumber: m.user?.phoneNumber ?? m.phoneNumber ?? 'N/A'
+        })),
         groupHealth: healthTrend && healthTrend.length > 0 ? healthTrend[0] : null,
         isLoading: false,
         error: null,

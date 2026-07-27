@@ -12,6 +12,7 @@ export async function getGroupById(groupId: string) {
               id: true,
               fullName: true,
               avatarUrl: true,
+              phoneNumber: true,
             },
           },
         },
