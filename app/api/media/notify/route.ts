@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
  * Cloudinary POSTs upload completion events here.
  * Docs: https://cloudinary.com/documentation/notifications
  *
- * Registered URL: https://inclusion-x-finovate.vercel.app/api/media/notify
+ * Registered URL: https://vlsa-connect.vercel.app/api/media/notify
  */
 export async function POST(req: Request) {
   try {

@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
  * Africa's Talking POSTs delivery status updates here.
  * Docs: https://developers.africastalking.com/docs/sms/sending
  *
- * Registered URL: https://inclusion-x-finovate.vercel.app/api/sms/delivery
+ * Registered URL: https://vlsa-connect.vercel.app/api/sms/delivery
  */
 export async function POST(req: Request) {
   try {
