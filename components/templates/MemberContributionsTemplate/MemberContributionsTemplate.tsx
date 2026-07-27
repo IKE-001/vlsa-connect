@@ -16,7 +16,7 @@ export interface MemberContributionsTemplateProps {
   contributions: ContributionRecord[];
   totalContributedTambala: number;
   isLoading: boolean;
-  onContribute: (amountTambala: number, phone: string) => Promise<void>;
+  onContribute: (amountTambala: number, phone: string, method: "MOBILE_MONEY" | "CASH") => Promise<void>;
 }
 
 const METHOD_LABEL: Record<string, string> = {
@@ -34,6 +34,7 @@ export const MemberContributionsTemplate: React.FC<MemberContributionsTemplatePr
   const [showModal, setShowModal] = useState(false);
   const [amount, setAmount] = useState("");
   const [phone, setPhone] = useState("");
+  const [payMethod, setPayMethod] = useState<"MOBILE_MONEY" | "CASH">("MOBILE_MONEY");
   const [submitting, setSubmitting] = useState(false);
 
   const approvedContributions = contributions.filter((c) => c.status === "APPROVED");
@@ -47,7 +48,7 @@ export const MemberContributionsTemplate: React.FC<MemberContributionsTemplatePr
     if (!amountNum || amountNum <= 0) return;
     setSubmitting(true);
     try {
-      await onContribute(amountNum, phone);
+      await onContribute(amountNum, phone, payMethod);
       setShowModal(false);
       setAmount("");
       setPhone("");
@@ -112,10 +113,47 @@ export const MemberContributionsTemplate: React.FC<MemberContributionsTemplatePr
           <div className="bg-white rounded-[20px] p-6 max-w-md w-full shadow-2xl flex flex-col gap-4">
             <h3 className="text-[17px] font-extrabold text-[#1B2321]">Make New Contribution</h3>
             <Input label="Contribution Amount (MWK)" placeholder="e.g. 250" theme="green" fullWidth value={amount} onChange={(e) => setAmount(e.target.value)} />
-            <Input label="Mobile Money / Phone Number" placeholder="+265 999 000 000" theme="green" fullWidth value={phone} onChange={(e) => setPhone(e.target.value)} />
+            {/* Payment method selector */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[12.5px] font-semibold text-[#5B6B65]">Payment Method</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPayMethod("MOBILE_MONEY")}
+                  className={`flex-1 py-2.5 px-3 rounded-[10px] text-[13px] font-bold border transition-all ${
+                    payMethod === "MOBILE_MONEY"
+                      ? "bg-[#E3F3EA] border-[#2D7A52] text-[#2D7A52]"
+                      : "border-[#E9EDEA] text-[#94A29C] hover:border-[#2D7A52]"
+                  }`}
+                >
+                  Mobile Money
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPayMethod("CASH")}
+                  className={`flex-1 py-2.5 px-3 rounded-[10px] text-[13px] font-bold border transition-all ${
+                    payMethod === "CASH"
+                      ? "bg-[#E3F3EA] border-[#2D7A52] text-[#2D7A52]"
+                      : "border-[#E9EDEA] text-[#94A29C] hover:border-[#2D7A52]"
+                  }`}
+                >
+                  Cash
+                </button>
+              </div>
+            </div>
+            {payMethod === "MOBILE_MONEY" && (
+              <Input label="Mobile Number" placeholder="+265 999 000 000" theme="green" fullWidth value={phone} onChange={(e) => setPhone(e.target.value)} />
+            )}
+            {payMethod === "MOBILE_MONEY" && (
+              <p className="text-[11.5px] text-[#5B6B65] bg-[#F1F4F2] rounded-[8px] p-3">
+                You will be redirected to PayChangu to complete your payment securely.
+              </p>
+            )}
             <div className="flex gap-3 justify-end mt-2">
               <Button variant="outline" theme="green" onClick={() => setShowModal(false)}>Cancel</Button>
-              <Button theme="green" onClick={handleSubmit} disabled={submitting}>{submitting ? "Processing…" : "Confirm Payment"}</Button>
+              <Button theme="green" onClick={handleSubmit} disabled={submitting}>
+                {submitting ? "Processing…" : payMethod === "MOBILE_MONEY" ? "Pay Online" : "Confirm"}
+              </Button>
             </div>
           </div>
         </div>

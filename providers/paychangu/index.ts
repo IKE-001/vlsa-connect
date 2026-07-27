@@ -8,7 +8,8 @@
 
 const BASE_URL = process.env.PAYCHANGU_BASE_URL || 'https://api.paychangu.com';
 const SECRET_KEY = process.env.PAYCHANGU_SECRET_KEY!;
-const CALLBACK_URL = process.env.PAYCHANGU_CALLBACK_URL || 'https://inclusion-x-finovate.vercel.app/api/payments/callback';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://vlsa-connect.vercel.app';
+const CALLBACK_URL = process.env.PAYCHANGU_CALLBACK_URL || `${APP_URL}/api/payments/callback`;
 
 export interface InitiatePaymentOptions {
   amountTambala: number;       // Amount in tambala — we convert to MWK internally
@@ -109,3 +110,137 @@ export async function verifyPayment({ txRef }: VerifyPaymentOptions) {
     return { success: false, error };
   }
 }
+
+/**
+ * Fetches all supported mobile money operators from PayChangu.
+ */
+export async function getMobileMoneyOperators() {
+  try {
+    const response = await fetch(`${BASE_URL}/mobile-money`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${SECRET_KEY}`,
+      },
+    });
+
+    const data = await response.json() as any;
+    if (!response.ok) {
+      return { success: false, error: data };
+    }
+
+    return { success: true, operators: data?.data ?? [] };
+  } catch (error) {
+    console.error('Error getting mobile money operators:', error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Initiates a Mobile Money payout/transfer via PayChangu.
+ */
+export async function initiateMobileMoneyPayout(options: {
+  mobile: string;
+  amountTambala: number;
+  operatorRefId: string;
+  chargeId: string;
+}) {
+  const amountMwk = options.amountTambala / 100;
+  const payload = {
+    mobile: options.mobile,
+    amount: amountMwk,
+    mobile_money_operator_ref_id: options.operatorRefId,
+    charge_id: options.chargeId,
+  };
+
+  try {
+    const response = await fetch(`${BASE_URL}/mobile-money/payouts/initialize`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${SECRET_KEY}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json() as any;
+    if (!response.ok) {
+      return { success: false, error: data };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error initiating PayChangu MM Payout:', error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Fetches supported banks for payouts.
+ */
+export async function getSupportedBanks() {
+  try {
+    const response = await fetch(`${BASE_URL}/direct-charge/payouts/supported-banks?currency=MWK`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${SECRET_KEY}`,
+      },
+    });
+
+    const data = await response.json() as any;
+    if (!response.ok) {
+      return { success: false, error: data };
+    }
+
+    return { success: true, banks: data ?? [] };
+  } catch (error) {
+    console.error('Error getting supported banks:', error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Initiates a Bank payout/transfer via PayChangu.
+ */
+export async function initiateBankPayout(options: {
+  bankUuid: string;
+  accountNumber: string;
+  accountName: string;
+  amountTambala: number;
+  chargeId: string;
+}) {
+  const amountMwk = options.amountTambala / 100;
+  const payload = {
+    payout_method: 'bank_transfer',
+    bank_uuid: options.bankUuid,
+    bank_account_number: options.accountNumber,
+    bank_account_name: options.accountName,
+    amount: amountMwk,
+    charge_id: options.chargeId,
+  };
+
+  try {
+    const response = await fetch(`${BASE_URL}/direct-charge/payouts/initialize`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${SECRET_KEY}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json() as any;
+    if (!response.ok) {
+      return { success: false, error: data };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error initiating PayChangu Bank Payout:', error);
+    return { success: false, error };
+  }
+}
+

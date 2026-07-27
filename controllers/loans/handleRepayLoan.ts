@@ -5,11 +5,11 @@
 // Business rules:
 //   1. Loan must be DISBURSED or REPAYING
 //   2. Repayment must not exceed remaining balance
-//   3. Ledger CREDIT + instalment insert + amountRepaid increment atomically (FIX BUG-03)
-//   4. Mark REPAID when balance is cleared
-//   5. Trigger Health Score recompute
-//
-// FIX BUG-03: All three DB writes are inside ONE db.$transaction.
+//   3. For CASH: ledger CREDIT + instalment insert + amountRepaid increment atomically
+//   4. For MOBILE_MONEY/CARD: initiate PayChangu checkout, record PaymentTransaction
+//      → webhook will complete the ledger when payment confirms
+//   5. Mark REPAID when balance is cleared
+//   6. Trigger Health Score recompute
 // =============================================================================
 
 import db from '@/lib/db';
@@ -19,6 +19,7 @@ import { saveHealthScore } from '@/services/healthScore/saveHealthScore';
 import { RepayLoanInput } from '@/lib/validations/loans';
 import { ApiResponse } from '@/types/financial';
 import { LOAN_RULES } from '@/config/loanRules';
+import { PaymentsController } from '@/controllers/payments/payments.controller';
 
 type HandleRepayLoanArgs = RepayLoanInput & {
   loanId: string;
@@ -28,7 +29,7 @@ type HandleRepayLoanArgs = RepayLoanInput & {
 
 export async function handleRepayLoan(
   args: HandleRepayLoanArgs
-): Promise<ApiResponse<{ loanStatus: string; remainingDueTambala: number }>> {
+): Promise<ApiResponse<{ loanStatus: string; remainingDueTambala: number; checkoutUrl?: string }>> {
   const { loanId, amountTambala, method, paychanguRef, idempotencyKey, callerMemberId } = args;
 
   // Validate OUTSIDE transaction (no side effects).
@@ -62,9 +63,56 @@ export async function handleRepayLoan(
     };
   }
 
-  // BUG-03 FIX: ledger write + repayment insert + loan update in ONE transaction.
+  // For MOBILE_MONEY or CARD — initiate PayChangu checkout.
+  // Webhook will complete the ledger entry when payment confirms.
+  if (method === 'MOBILE_MONEY' || method === 'CARD') {
+    const member = await db.groupMember.findUnique({
+      where: { id: callerMemberId },
+      include: { user: { select: { email: true, fullName: true } } },
+    });
+
+    const names = (member?.user?.fullName || 'VSLA Member').split(' ');
+    const firstName = names[0] || 'VSLA';
+    const lastName = names.slice(1).join(' ') || 'Member';
+    const txRef = idempotencyKey || `repay-${loanId}-${Date.now()}`;
+
+    const paychanguRes = await PaymentsController.initializeTransaction({
+      amountTambala,
+      email: member?.user?.email || 'member@vslaconnect.com',
+      firstName,
+      lastName,
+      txRef,
+      description: `Loan repayment — ${amountTambala / 100} MWK`,
+    });
+
+    if (paychanguRes.success && paychanguRes.checkoutUrl) {
+      // Record pending payment transaction
+      await db.paymentTransaction.create({
+        data: {
+          idempotencyKey: txRef,
+          entityType: 'LOAN_REPAYMENT',
+          entityId: loan.id,
+          amountTambala,
+          status: 'INITIATED',
+        },
+      });
+
+      return {
+        success: true,
+        data: {
+          loanStatus: loan.status,
+          remainingDueTambala: remaining,
+          checkoutUrl: paychanguRes.checkoutUrl,
+        },
+      };
+    }
+
+    // If PayChangu fails, fall through to record CASH-style
+    console.warn('PayChangu checkout failed, falling back to manual recording.');
+  }
+
+  // CASH path (or PayChangu fallback): ledger write + repayment insert + loan update atomically.
   const { newRemaining, newStatus } = await db.$transaction(async (tx) => {
-    // 1. Ledger CREDIT entry (passes tx so it shares this transaction).
     await appendLedgerEntry(
       {
         groupId: loan.groupId,
@@ -76,7 +124,6 @@ export async function handleRepayLoan(
       tx
     );
 
-    // 2. Insert repayment instalment.
     await tx.loanRepayment.create({
       data: {
         loanId,
@@ -87,7 +134,6 @@ export async function handleRepayLoan(
       },
     });
 
-    // 3. Increment amountRepaidTambala and determine new status.
     const newAmountRepaid = alreadyRepaid + amountTambala;
     const computedRemaining = totalDue - newAmountRepaid;
     const resolvedStatus: 'REPAYING' | 'REPAID' = computedRemaining <= 0 ? 'REPAID' : 'REPAYING';
