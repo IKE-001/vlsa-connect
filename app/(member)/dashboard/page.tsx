@@ -1,6 +1,6 @@
 'use client';
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { MemberDashboardTemplate } from "@/components/templates/MemberDashboardTemplate/MemberDashboardTemplate";
 import { GroupOnboarding } from "@/components/templates/GroupOnboarding/GroupOnboarding";
 import { LoanVotingPanel } from "@/components/organisms/LoanVotingPanel";
@@ -14,18 +14,42 @@ import { useMeetings } from "@/hooks/useMeetings";
 import { useGroup } from "@/hooks/useGroup";
 import { setActiveGroupId, api } from "@/lib/api/client";
 
-function getStoredGroupId(): string {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem("vsla_active_group_id") ?? "";
-}
-
 export default function MemberDashboardPage() {
-  const groupId = getStoredGroupId();
-  if (groupId) setActiveGroupId(groupId);
-
   const { profile, isLoading: profileLoading } = useProfile();
+  const [userGroupId, setUserGroupId] = useState<string | null>(null);
+  const [checkingGroups, setCheckingGroups] = useState(true);
 
-  if (profileLoading) {
+  useEffect(() => {
+    async function checkUserGroups() {
+      try {
+        const res = await fetch("/api/groups");
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          // User belongs to at least 1 group
+          const storedId = localStorage.getItem("vsla_active_group_id");
+          const belongsToStored = json.data.some((g: any) => g.id === storedId);
+          const activeId = belongsToStored ? storedId : json.data[0].id;
+          
+          setActiveGroupId(activeId);
+          setUserGroupId(activeId);
+        } else {
+          // User belongs to NO groups -> clear stale localStorage ID
+          localStorage.removeItem("vsla_active_group_id");
+          setUserGroupId(null);
+        }
+      } catch (err) {
+        console.error("Failed to check user groups:", err);
+      } finally {
+        setCheckingGroups(false);
+      }
+    }
+
+    if (!profileLoading) {
+      checkUserGroups();
+    }
+  }, [profileLoading]);
+
+  if (profileLoading || checkingGroups) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F1F4F2]">
         <div
@@ -36,11 +60,12 @@ export default function MemberDashboardPage() {
     );
   }
 
-  if (!groupId) {
+  // If user has no active group, render Create or Join Group Onboarding!
+  if (!userGroupId) {
     return <GroupOnboarding userName={profile?.fullName} />;
   }
 
-  return <MemberDashboardWithGroup groupId={groupId} profile={profile} />;
+  return <MemberDashboardWithGroup groupId={userGroupId} profile={profile} />;
 }
 
 /** Separated so hooks only run when a real groupId is available */
@@ -79,7 +104,6 @@ function MemberDashboardWithGroup({
     await refreshMeetings();
   };
 
-  // Governance widgets are shown to Chairperson, Treasurer, and Secretary
   const governanceWidgets = isGovernanceRole ? (
     <>
       {groupHealth && (

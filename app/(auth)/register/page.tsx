@@ -235,6 +235,9 @@ export default function RegisterPage() {
       });
       const json = await res.json();
       if (!json.success) { setOtpError(typeof json.error === 'string' ? json.error : 'Invalid OTP.'); return; }
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("vsla_active_group_id");
+      }
       setStep('done');
       setTimeout(() => router.push('/login'), 2000);
     } catch { setOtpError('Network error. Please check your connection.'); }

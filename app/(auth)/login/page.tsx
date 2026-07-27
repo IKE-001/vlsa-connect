@@ -18,6 +18,10 @@ async function hydrateActiveGroup(): Promise<void> {
     const json = await res.json();
     if (json.success && Array.isArray(json.data) && json.data.length > 0) {
       setActiveGroupId(json.data[0].id);
+    } else {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("vsla_active_group_id");
+      }
     }
   } catch {
     // Non-fatal — dashboard will show onboarding if no group found

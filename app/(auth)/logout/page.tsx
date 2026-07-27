@@ -11,6 +11,9 @@ export default function LogoutPage() {
   useEffect(() => {
     async function doLogout() {
       try {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("vsla_active_group_id");
+        }
         await logout();
       } catch (e) {
         console.error("Logout failed", e);
