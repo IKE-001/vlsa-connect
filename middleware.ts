@@ -60,8 +60,40 @@ function isPublic(pathname: string): boolean {
 }
 
 export async function middleware(req: NextRequest) {
-  // Auth checks disabled temporarily so dashboards and routes can be viewed directly.
-  return NextResponse.next();
+  const { pathname } = req.nextUrl;
+
+  if (isPublic(pathname)) {
+    return NextResponse.next();
+  }
+
+  const token = req.cookies.get(COOKIE_NAME)?.value;
+
+  if (!token) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized.' }, { status: 401 });
+    }
+    return NextResponse.redirect(new URL('/login', req.url));
+  }
+
+  try {
+    const payload = await verifyJwt(token);
+
+    const headers = new Headers(req.headers);
+    if (payload.sub) headers.set('x-caller-user-id', payload.sub);
+    if (payload.role) headers.set('x-caller-platform-role', payload.role);
+    if (payload.sessionId) headers.set('x-caller-session-id', payload.sessionId);
+
+    return NextResponse.next({
+      request: {
+        headers,
+      },
+    });
+  } catch (err) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ success: false, error: 'Session expired.' }, { status: 401 });
+    }
+    return NextResponse.redirect(new URL('/login', req.url));
+  }
 }
 
 export const config = {
