@@ -10,7 +10,9 @@ import {
 export async function handleSendMessage(
   userId: string,
   groupId: string,
-  body: string
+  body: string,
+  mediaUrl?: string,
+  mediaType?: string
 ) {
   // Rule: Sender must be an active member of the VSLA group
   const isMember = await checkGroupMembership(groupId, userId);
@@ -18,7 +20,7 @@ export async function handleSendMessage(
     throw new Error("UNAUTHORIZED_GROUP_ACCESS");
   }
 
-  const message = await createChatMessage(groupId, userId, body);
+  const message = await createChatMessage(groupId, userId, body, mediaUrl, mediaType);
   return message;
 }
 

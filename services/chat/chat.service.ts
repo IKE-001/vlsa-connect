@@ -9,13 +9,16 @@ import db from "@/lib/db";
 export async function createChatMessage(
   groupId: string,
   senderId: string,
-  body: string
+  body: string,
+  mediaUrl?: string,
+  mediaType?: string
 ) {
   return await db.chatMessage.create({
     data: {
       groupId,
       senderId,
       body,
+      ...(mediaUrl ? { mediaUrl, mediaType: mediaType ?? "document" } : {}),
     },
     include: {
       sender: {

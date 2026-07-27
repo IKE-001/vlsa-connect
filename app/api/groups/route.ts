@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CreateGroupSchema } from '@/lib/validations/groups';
 import { GroupsController } from '@/controllers/groups/groups.controller';
+import { getCallerUserId } from '@/lib/utils/getCallerUserId';
 import db from '@/lib/db';
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-caller-user-id');
+    const userId = await getCallerUserId(req);
     if (!userId) return NextResponse.json({ success: false, error: 'Unauthorized.' }, { status: 401 });
 
     const body = await req.json();
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-caller-user-id');
+    const userId = await getCallerUserId(req);
     if (!userId) return NextResponse.json({ success: false, error: 'Unauthorized.' }, { status: 401 });
 
     // Fetch all groups the user is a member of

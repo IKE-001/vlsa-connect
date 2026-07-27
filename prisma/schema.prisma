@@ -747,8 +747,10 @@ model ChatMessage {
   groupId  String @db.Uuid
   senderId String @db.Uuid
 
-  body   String   @db.Text
-  sentAt DateTime @default(now())
+  body      String   @db.Text
+  mediaUrl  String?  @db.Text           // Cloudinary URL for attached photo/document
+  mediaType String?  @db.VarChar(20)    // "image" | "document"
+  sentAt    DateTime @default(now())
 
   group  VslaGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
   sender User      @relation(fields: [senderId], references: [id])

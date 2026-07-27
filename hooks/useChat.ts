@@ -20,6 +20,8 @@ export interface ChatMessage {
   senderId: string;
   senderName?: string;
   body: string;
+  mediaUrl?: string;
+  mediaType?: string;
   createdAt: string;
 }
 
@@ -66,8 +68,8 @@ export function useChat(groupId: string, limit = 50) {
   }, [fetchMessages, groupId]);
 
   const sendMessage = useCallback(
-    async (body: string) => {
-      if (!groupId || !body.trim()) return;
+    async (body: string, mediaUrl?: string, mediaType?: 'image' | 'document') => {
+      if (!groupId || (!body.trim() && !mediaUrl)) return;
       setState((s) => ({ ...s, isSending: true }));
       try {
         const res = await fetch('/api/chat', {
@@ -76,7 +78,7 @@ export function useChat(groupId: string, limit = 50) {
             'Content-Type': 'application/json',
             'x-active-group-id': groupId,
           },
-          body: JSON.stringify({ groupId, body }),
+          body: JSON.stringify({ groupId, body, mediaUrl, mediaType }),
         });
         if (!res.ok) {
           const err = await res.json();

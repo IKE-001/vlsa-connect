@@ -12,8 +12,13 @@ export const sendMessageSchema = z.object({
   body: z
     .string()
     .trim()
-    .min(1, { message: "Message cannot be empty" })
-    .max(2000, { message: "Message cannot exceed 2000 characters" }),
-});
+    .max(2000, { message: "Message cannot exceed 2000 characters" })
+    .default(""),
+  mediaUrl: z.string().url().optional(),
+  mediaType: z.enum(["image", "document"]).optional(),
+}).refine(
+  (data) => data.body.length > 0 || !!data.mediaUrl,
+  { message: "Message must have text or an attachment" }
+);
 
 export type SendMessageInput = z.infer<typeof sendMessageSchema>;

@@ -1,23 +1,16 @@
 // app/api/chat/route.ts
 
-
 import { NextRequest, NextResponse } from "next/server";
 import { sendMessageSchema } from "@/lib/validations/chat";
 import {
   handleSendMessage,
   handleFetchMessages,
 } from "@/controllers/chat/chat.controller";
-
-
-async function getAuthenticatedUserId(req: NextRequest): Promise<string | null> {
-  
-  const userId = req.headers.get('x-user-id') ?? ''; 
-  return userId;
-}
+import { getCallerUserId } from "@/lib/utils/getCallerUserId";
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getAuthenticatedUserId(req);
+    const userId = await getCallerUserId(req);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -54,7 +47,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getAuthenticatedUserId(req);
+    const userId = await getCallerUserId(req);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -69,9 +62,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { groupId, body: messageBody } = validationResult.data;
+    const { groupId, body: messageBody, mediaUrl, mediaType } = validationResult.data;
 
-    const newMessage = await handleSendMessage(userId, groupId, messageBody);
+    const newMessage = await handleSendMessage(userId, groupId, messageBody, mediaUrl, mediaType);
     return NextResponse.json({ data: newMessage }, { status: 201 });
   } catch (error: any) {
     if (error.message === "UNAUTHORIZED_GROUP_ACCESS") {

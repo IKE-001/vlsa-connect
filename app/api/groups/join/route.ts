@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { JoinGroupSchema } from '@/lib/validations/groups';
 import { GroupsController } from '@/controllers/groups/groups.controller';
+import { getCallerUserId } from '@/lib/utils/getCallerUserId';
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-caller-user-id');
+    const userId = await getCallerUserId(req);
     if (!userId) return NextResponse.json({ success: false, error: 'Unauthorized.' }, { status: 401 });
 
     const body = await req.json();
