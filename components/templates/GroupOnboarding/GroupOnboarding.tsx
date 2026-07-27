@@ -117,7 +117,7 @@ function JoinGroupPanel({ onSuccess }: { onSuccess: (groupId: string) => void })
         type="button"
         onClick={handleJoin}
         disabled={loading}
-        className="w-full rounded-full py-3 text-[13.5px] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+        className="w-full rounded-full py-3 text-[13.5px] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60 cursor-pointer"
         style={{ background: btnGreen, border: 'none', fontFamily: 'inherit' }}
       >
         {loading ? 'Joining…' : 'Join Group'}
@@ -258,7 +258,7 @@ function CreateGroupPanel({ onSuccess }: { onSuccess: (groupId: string, inviteCo
         type="button"
         onClick={handleCreate}
         disabled={loading}
-        className="w-full rounded-full py-3 text-[13.5px] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+        className="w-full rounded-full py-3 text-[13.5px] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60 cursor-pointer"
         style={{ background: btnGreen, border: 'none', fontFamily: 'inherit' }}
       >
         {loading ? 'Creating Group…' : 'Create Group'}
@@ -307,7 +307,7 @@ function GroupCreatedModal({ inviteCode, onContinue }: { inviteCode: string; onC
           <button
             type="button"
             onClick={copy}
-            className="ml-3 rounded-[8px] px-3 py-1.5 text-[12px] font-bold transition-colors"
+            className="ml-3 rounded-[8px] px-3 py-1.5 text-[12px] font-bold transition-colors cursor-pointer"
             style={{
               background: copied ? brandGreen : 'transparent',
               color: copied ? '#fff' : brandGreen,
@@ -321,7 +321,7 @@ function GroupCreatedModal({ inviteCode, onContinue }: { inviteCode: string; onC
         <button
           type="button"
           onClick={onContinue}
-          className="w-full rounded-full py-3 text-[13.5px] font-bold text-white"
+          className="w-full rounded-full py-3 text-[13.5px] font-bold text-white cursor-pointer"
           style={{ background: btnGreen, border: 'none', fontFamily: 'inherit' }}
         >
           Continue to Dashboard
@@ -334,28 +334,47 @@ function GroupCreatedModal({ inviteCode, onContinue }: { inviteCode: string; onC
 /* ═══════════════════════════════════════════════════════════════ */
 /*  ONBOARDING SCREEN — shown when user has no active group         */
 /* ═══════════════════════════════════════════════════════════════ */
-export function GroupOnboarding({ userName }: { userName?: string }) {
+export function GroupOnboarding({
+  userName,
+  onSuccess,
+}: {
+  userName?: string;
+  onSuccess?: (groupId: string) => void;
+}) {
   const router = useRouter();
   const [tab, setTab] = useState<'join' | 'create'>('join');
-  const [createdInviteCode, setCreatedInviteCode] = useState<string | null>(null);
-  const [joinError, setJoinError] = useState<string | null>(null);
+  const [createdInfo, setCreatedInfo] = useState<{ id: string; code: string } | null>(null);
 
   const handleGroupReady = (groupId: string) => {
     setActiveGroupId(groupId);
-    router.refresh();
+    if (onSuccess) {
+      onSuccess(groupId);
+    } else {
+      window.location.href = '/dashboard';
+    }
   };
 
   const handleCreated = (groupId: string, inviteCode: string) => {
     setActiveGroupId(groupId);
-    setCreatedInviteCode(inviteCode);
+    setCreatedInfo({ id: groupId, code: inviteCode });
+  };
+
+  const handleContinueAfterCreated = () => {
+    if (!createdInfo) return;
+    setActiveGroupId(createdInfo.id);
+    if (onSuccess) {
+      onSuccess(createdInfo.id);
+    } else {
+      window.location.href = '/dashboard';
+    }
   };
 
   return (
     <>
-      {createdInviteCode && (
+      {createdInfo && (
         <GroupCreatedModal
-          inviteCode={createdInviteCode}
-          onContinue={() => { setCreatedInviteCode(null); router.refresh(); }}
+          inviteCode={createdInfo.code}
+          onContinue={handleContinueAfterCreated}
         />
       )}
 
@@ -390,8 +409,8 @@ export function GroupOnboarding({ userName }: { userName?: string }) {
                 <button
                   key={t}
                   type="button"
-                  onClick={() => { setTab(t); setJoinError(null); }}
-                  className="flex-1 rounded-[10px] py-2 text-[13px] font-semibold transition-all"
+                  onClick={() => setTab(t)}
+                  className="flex-1 rounded-[10px] py-2 text-[13px] font-semibold transition-all cursor-pointer"
                   style={{
                     background: tab === t ? '#fff' : 'transparent',
                     color: tab === t ? inkColor : inkSoft,

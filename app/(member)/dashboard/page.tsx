@@ -28,7 +28,7 @@ export default function MemberDashboardPage() {
           // User belongs to at least 1 group
           const storedId = localStorage.getItem("vsla_active_group_id");
           const belongsToStored = json.data.some((g: any) => g.id === storedId);
-          const activeId = belongsToStored ? storedId : json.data[0].id;
+          const activeId: string = (belongsToStored && storedId) ? storedId : json.data[0].id;
           
           setActiveGroupId(activeId);
           setUserGroupId(activeId);
