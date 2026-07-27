@@ -28,6 +28,7 @@ export interface MemberDashboardTemplateProps {
   loans: LoanWithVotes[];
   meetings: MeetingRecord[];
   totalGroupSavings: number;
+  governanceWidgets?: React.ReactNode;
 }
 
 export const MemberDashboardTemplate: React.FC<MemberDashboardTemplateProps> = ({
@@ -40,6 +41,7 @@ export const MemberDashboardTemplate: React.FC<MemberDashboardTemplateProps> = (
   loans,
   meetings,
   totalGroupSavings,
+  governanceWidgets,
 }) => {
   const [mobileTab, setMobileTab] = useState<MobileTab>("home");
   const [showBalance, setShowBalance] = useState<boolean>(true);
@@ -169,6 +171,13 @@ export const MemberDashboardTemplate: React.FC<MemberDashboardTemplateProps> = (
               <NextMeetingCard date={nextMeeting ? format(parseISO(nextMeeting.scheduledAt), "EEEE, d MMMM yyyy · p") : "No upcoming meetings"} />
             </div>
           </div>
+          
+          {/* Governance Widgets for roles like Chairperson */}
+          {governanceWidgets && (
+            <div className="flex flex-col gap-5">
+              {governanceWidgets}
+            </div>
+          )}
         </main>
 
         {/* ═══════════════════════════════════════════════
@@ -290,6 +299,13 @@ export const MemberDashboardTemplate: React.FC<MemberDashboardTemplateProps> = (
               <div className="text-sm text-gray-500 py-4 text-center">No recent activity</div>
             )}
           </div>
+          
+          {/* Governance Widgets Mobile */}
+          {governanceWidgets && (
+            <div className="mx-4 mt-3.5 flex flex-col gap-3.5">
+              {governanceWidgets}
+            </div>
+          )}
         </div>
       </div>
 

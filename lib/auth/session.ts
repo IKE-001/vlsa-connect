@@ -43,9 +43,9 @@ export async function fetchCurrentSession(): Promise<SessionUser | null> {
 export function roleToDashboardPath(role: string): string {
   const map: Record<string, string> = {
     MEMBER: '/dashboard',
-    CHAIRPERSON: '/chairperson/dashboard',
-    TREASURER: '/treasurer/dashboard',
-    SECRETARY: '/secretary/dashboard',
+    CHAIRPERSON: '/dashboard',
+    TREASURER: '/dashboard',
+    SECRETARY: '/dashboard',
     BANK_OFFICER: '/bank-officer/dashboard',
     ADMIN: '/admin/dashboard',
   };

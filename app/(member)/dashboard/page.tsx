@@ -3,6 +3,10 @@
 import React from "react";
 import { MemberDashboardTemplate } from "@/components/templates/MemberDashboardTemplate/MemberDashboardTemplate";
 import { GroupOnboarding } from "@/components/templates/GroupOnboarding/GroupOnboarding";
+import { LoanVotingPanel } from "@/components/organisms/LoanVotingPanel";
+import { GroupDirectory } from "@/components/organisms/GroupDirectory";
+import { HealthScoreChart } from "@/components/organisms/HealthScoreChart";
+import { UpcomingMeetings } from "@/components/organisms/UpcomingMeetings";
 import { useProfile } from "@/hooks/useProfile";
 import { useSavings } from "@/hooks/useSavings";
 import { useLoans } from "@/hooks/useLoans";
@@ -21,7 +25,6 @@ export default function MemberDashboardPage() {
 
   const { profile, isLoading: profileLoading } = useProfile();
 
-  // If profile is still loading, show nothing (prevents onboarding flash)
   if (profileLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F1F4F2]">
@@ -33,7 +36,6 @@ export default function MemberDashboardPage() {
     );
   }
 
-  // No group context → show onboarding to create or join a group
   if (!groupId) {
     return <GroupOnboarding userName={profile?.fullName} />;
   }
@@ -49,12 +51,45 @@ function MemberDashboardWithGroup({
   groupId: string;
   profile: ReturnType<typeof useProfile>['profile'];
 }) {
-  const { groupName, members, group } = useGroup(groupId);
-  const myMemberId = members.find((m) => m.userId === profile?.userId)?.id;
-  
+  const { groupName, members, group, groupHealth } = useGroup(groupId);
+  const myMember = members.find((m) => m.userId === profile?.userId);
+  const myMemberId = myMember?.id;
+  const myRole = myMember?.roleInGroup ?? 'MEMBER';
+
   const { contributions, balanceTambala } = useSavings({ groupId, memberId: myMemberId });
-  const { loans } = useLoans({ groupId, callerMemberId: myMemberId });
-  const { meetings } = useMeetings(groupId);
+  const { loans, voteLoan } = useLoans({ groupId, callerMemberId: myMemberId });
+  const { meetings, confirmAttendance } = useMeetings(groupId);
+
+  const pendingLoans = loans.filter((l) => l.status === 'PENDING');
+  const isGovernanceRole = myRole === 'CHAIRPERSON' || myRole === 'TREASURER' || myRole === 'SECRETARY';
+
+  // Governance widgets are shown to Chairperson, Treasurer, and Secretary
+  const governanceWidgets = isGovernanceRole ? (
+    <>
+      {groupHealth && (
+        <HealthScoreChart scoreData={groupHealth} groupName={groupName} />
+      )}
+      <LoanVotingPanel
+        pendingLoans={pendingLoans}
+        members={members}
+        onVote={voteLoan}
+      />
+      <GroupDirectory
+        members={members.map((m) => ({
+          id: m.id,
+          name: m.fullName,
+          phone: m.phoneNumber,
+          role: m.roleInGroup,
+          avatarUrl: m.avatarUrl,
+          email: null,
+        }))}
+      />
+      <UpcomingMeetings
+        meetings={meetings}
+        onRSVP={(id) => { void confirmAttendance(id, ''); }}
+      />
+    </>
+  ) : undefined;
 
   return (
     <MemberDashboardTemplate
@@ -77,6 +112,7 @@ function MemberDashboardWithGroup({
       loans={loans}
       meetings={meetings}
       totalGroupSavings={group?.totalPoolTambala ?? 0}
+      governanceWidgets={governanceWidgets}
     />
   );
 }
