@@ -26,9 +26,11 @@ export default function MemberLoansPage() {
     await applyLoan(principalTambala);
   };
 
-  const handleRepay = async (loanId: string, amountTambala: number) => {
-    // Opens a repayment modal in a real implementation
-    // For now we do nothing until a repayment amount UI is added
+  const handleRepay = async (loanId: string, amountTambala: number, method: "CASH" | "MOBILE_MONEY") => {
+    const result = await repayLoan(loanId, amountTambala, method);
+    if (result?.checkoutUrl) {
+      window.location.href = result.checkoutUrl;
+    }
   };
 
   return (

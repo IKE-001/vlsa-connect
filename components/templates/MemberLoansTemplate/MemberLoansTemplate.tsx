@@ -17,7 +17,7 @@ export interface MemberLoansTemplateProps {
   loans: LoanWithVotes[];
   isLoading: boolean;
   onApplyLoan: (principalTambala: number) => Promise<void>;
-  onRepay: (loanId: string, amountTambala: number) => Promise<void>;
+  onRepay: (loanId: string, amountTambala: number, method: "CASH" | "MOBILE_MONEY") => Promise<void>;
 }
 
 const STATUS_BADGE: Record<string, { variant: "blue" | "green" | "orange" | "red"; label: string }> = {
@@ -39,6 +39,11 @@ export const MemberLoansTemplate: React.FC<MemberLoansTemplateProps> = ({
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [loanAmount, setLoanAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  
+  const [showRepayModal, setShowRepayModal] = useState<string | null>(null);
+  const [repayAmount, setRepayAmount] = useState("");
+  const [repayMethod, setRepayMethod] = useState<"MOBILE_MONEY" | "CASH">("MOBILE_MONEY");
+  const [repaySubmitting, setRepaySubmitting] = useState(false);
 
   const activeLoans = loans.filter((l) =>
     l.status === "DISBURSED" || l.status === "REPAYING" || l.status === "OVERDUE"
@@ -55,6 +60,20 @@ export const MemberLoansTemplate: React.FC<MemberLoansTemplateProps> = ({
       setLoanAmount("");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleRepay = async () => {
+    if (!showRepayModal) return;
+    const amt = parseInt(repayAmount) * 100;
+    if (!amt || amt <= 0) return;
+    setRepaySubmitting(true);
+    try {
+      await onRepay(showRepayModal, amt, repayMethod);
+      setShowRepayModal(null);
+      setRepayAmount("");
+    } finally {
+      setRepaySubmitting(false);
     }
   };
 
@@ -123,7 +142,7 @@ export const MemberLoansTemplate: React.FC<MemberLoansTemplateProps> = ({
                 </div>
 
                 {(loan.status === "REPAYING" || loan.status === "DISBURSED") && (
-                  <Button size="sm" theme="green" onClick={() => onRepay(loan.id, 0)}>
+                  <Button size="sm" theme="green" onClick={() => setShowRepayModal(loan.id)}>
                     Make Repayment
                   </Button>
                 )}
@@ -142,6 +161,56 @@ export const MemberLoansTemplate: React.FC<MemberLoansTemplateProps> = ({
             <div className="flex gap-3 justify-end mt-2">
               <Button variant="outline" theme="green" onClick={() => setShowApplyModal(false)}>Cancel</Button>
               <Button theme="green" onClick={handleApply} disabled={submitting}>{submitting ? "Submitting…" : "Submit Request"}</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRepayModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-[20px] p-6 max-w-md w-full shadow-2xl flex flex-col gap-4">
+            <h3 className="text-[17px] font-extrabold text-[#1B2321]">Make Loan Repayment</h3>
+            <Input label="Repayment Amount (MWK)" placeholder="e.g. 250" theme="green" fullWidth value={repayAmount} onChange={(e) => setRepayAmount(e.target.value)} />
+            
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[12.5px] font-semibold text-[#5B6B65]">Payment Method</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRepayMethod("MOBILE_MONEY")}
+                  className={`flex-1 py-2.5 px-3 rounded-[10px] text-[13px] font-bold border transition-all ${
+                    repayMethod === "MOBILE_MONEY"
+                      ? "bg-[#E3F3EA] border-[#2D7A52] text-[#2D7A52]"
+                      : "border-[#E9EDEA] text-[#94A29C] hover:border-[#2D7A52]"
+                  }`}
+                >
+                  Online Payment (Airtel, TNM or Bank via PayChangu)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRepayMethod("CASH")}
+                  className={`flex-1 py-2.5 px-3 rounded-[10px] text-[13px] font-bold border transition-all ${
+                    repayMethod === "CASH"
+                      ? "bg-[#E3F3EA] border-[#2D7A52] text-[#2D7A52]"
+                      : "border-[#E9EDEA] text-[#94A29C] hover:border-[#2D7A52]"
+                  }`}
+                >
+                  Cash
+                </button>
+              </div>
+            </div>
+
+            {repayMethod === "MOBILE_MONEY" && (
+              <p className="text-[11.5px] text-[#5B6B65] bg-[#F1F4F2] rounded-[8px] p-3">
+                You will be redirected to PayChangu to complete your payment securely.
+              </p>
+            )}
+
+            <div className="flex gap-3 justify-end mt-2">
+              <Button variant="outline" theme="green" onClick={() => setShowRepayModal(null)}>Cancel</Button>
+              <Button theme="green" onClick={handleRepay} disabled={repaySubmitting}>
+                {repaySubmitting ? "Processing…" : repayMethod === "MOBILE_MONEY" ? "Pay Online Now" : "Confirm Cash"}
+              </Button>
             </div>
           </div>
         </div>
