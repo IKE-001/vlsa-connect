@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export interface BankerGroupSummary {
   code: string;
@@ -93,53 +93,53 @@ export function useBanker() {
   const [approvals, setApprovals] = useState<BankerCreditApproval[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [portfolioRes, approvalsRes] = await Promise.all([
-          fetch("/api/banker/portfolio"),
-          fetch("/api/banker/approvals")
-        ]);
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [portfolioRes, approvalsRes] = await Promise.all([
+        fetch("/api/banker/portfolio"),
+        fetch("/api/banker/approvals")
+      ]);
 
-        let portfolioLoaded = false;
-        let approvalsLoaded = false;
+      let portfolioLoaded = false;
+      let approvalsLoaded = false;
 
-        if (portfolioRes.ok) {
-          const portfolioData = await portfolioRes.json();
-          if (Array.isArray(portfolioData.groups) && portfolioData.groups.length > 0) {
-            setGroups(portfolioData.groups);
-            portfolioLoaded = true;
-          }
+      if (portfolioRes.ok) {
+        const portfolioData = await portfolioRes.json();
+        if (Array.isArray(portfolioData.groups) && portfolioData.groups.length > 0) {
+          setGroups(portfolioData.groups);
+          portfolioLoaded = true;
         }
-
-        if (approvalsRes.ok) {
-          const approvalsData = await approvalsRes.json();
-          if (Array.isArray(approvalsData.approvals) && approvalsData.approvals.length > 0) {
-            setApprovals(approvalsData.approvals);
-            approvalsLoaded = true;
-          }
-        }
-
-        // Fallback to mock data if API returned nothing (empty DB / dev mode)
-        if (!portfolioLoaded) setGroups(MOCK_GROUPS);
-        if (!approvalsLoaded) setApprovals(MOCK_APPROVALS);
-
-      } catch (error) {
-        console.error("Failed to fetch banker data:", error);
-        // Network error — fall back to mock data so the UI is never blank
-        setGroups(MOCK_GROUPS);
-        setApprovals(MOCK_APPROVALS);
-      } finally {
-        setIsLoading(false);
       }
-    }
 
-    fetchData();
+      if (approvalsRes.ok) {
+        const approvalsData = await approvalsRes.json();
+        if (Array.isArray(approvalsData.approvals) && approvalsData.approvals.length > 0) {
+          setApprovals(approvalsData.approvals);
+          approvalsLoaded = true;
+        }
+      }
+
+      if (!portfolioLoaded) setGroups(MOCK_GROUPS);
+      if (!approvalsLoaded) setApprovals(MOCK_APPROVALS);
+
+    } catch (error) {
+      console.error("Failed to fetch banker data:", error);
+      setGroups(MOCK_GROUPS);
+      setApprovals(MOCK_APPROVALS);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   return {
     groups,
     approvals,
     isLoading,
+    refresh: fetchData,
   };
 }

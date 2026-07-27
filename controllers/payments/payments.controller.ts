@@ -3,7 +3,7 @@ import db from '@/lib/db';
 import { appendLedgerEntry } from '@/services/ledger/appendLedgerEntry';
 import { computeHealthScore } from '@/services/healthScore/computeHealthScore';
 import { saveHealthScore } from '@/services/healthScore/saveHealthScore';
-import { calcTotalDue } from '@/lib/utils/money';
+import { sendFanOutNotification } from '@/services/notifications/sendFanOutNotification';
 
 /**
  * Payments Controller
@@ -82,6 +82,7 @@ export class PaymentsController {
       if (transaction.entityType === 'CONTRIBUTION') {
         const contribution = await db.contribution.findUnique({
           where: { id: transaction.entityId },
+          include: { member: { select: { userId: true } } },
         });
 
         if (contribution && contribution.status !== 'APPROVED') {
@@ -108,6 +109,16 @@ export class PaymentsController {
             });
           });
 
+          // Send Fan-out Notification
+          if (contribution.member?.userId) {
+            const mwk = (contribution.amountTambala / 100).toLocaleString();
+            sendFanOutNotification({
+              userId: contribution.member.userId,
+              title: 'Payment Successful',
+              message: `Your online payment of ${mwk} MWK for group contribution was received and approved!`,
+            }).catch(console.error);
+          }
+
           // Recompute health score
           computeHealthScore(contribution.groupId)
             .then((breakdown) => saveHealthScore(contribution.groupId, breakdown))
@@ -116,6 +127,7 @@ export class PaymentsController {
       } else if (transaction.entityType === 'LOAN_REPAYMENT') {
         const loan = await db.loan.findUnique({
           where: { id: transaction.entityId },
+          include: { member: { select: { userId: true } } },
         });
 
         if (loan) {
@@ -160,6 +172,16 @@ export class PaymentsController {
             });
           });
 
+          // Send Fan-out Notification
+          if (loan.member?.userId) {
+            const mwk = (transaction.amountTambala / 100).toLocaleString();
+            sendFanOutNotification({
+              userId: loan.member.userId,
+              title: 'Loan Repayment Received',
+              message: `Your payment of ${mwk} MWK towards your loan has been successfully recorded.`,
+            }).catch(console.error);
+          }
+
           // Recompute health score
           computeHealthScore(loan.groupId)
             .then((breakdown) => saveHealthScore(loan.groupId, breakdown))
@@ -168,6 +190,7 @@ export class PaymentsController {
       } else if (transaction.entityType === 'WITHDRAWAL') {
         const withdrawal = await db.withdrawalRequest.findUnique({
           where: { id: transaction.entityId },
+          include: { member: { select: { userId: true } } },
         });
 
         if (withdrawal && withdrawal.status !== 'PAID_OUT') {
@@ -179,6 +202,15 @@ export class PaymentsController {
               paychanguRef: chargeId,
             },
           });
+
+          if (withdrawal.member?.userId) {
+            const mwk = (withdrawal.amountTambala / 100).toLocaleString();
+            sendFanOutNotification({
+              userId: withdrawal.member.userId,
+              title: 'Withdrawal Paid Out',
+              message: `Your withdrawal request of ${mwk} MWK has been transferred to your mobile money account.`,
+            }).catch(console.error);
+          }
         }
       }
       
@@ -196,7 +228,6 @@ export class PaymentsController {
     const rawPhone = phoneNumber.replace(/^\+/, '');
     const localNumber = rawPhone.startsWith('265') ? rawPhone.substring(3) : rawPhone;
 
-    // Get operators list
     const opsResult = await getMobileMoneyOperators();
     if (!opsResult.success || !opsResult.operators) {
       throw new Error(opsResult.error || 'Failed to fetch operators list from PayChangu');
@@ -218,7 +249,6 @@ export class PaymentsController {
       selectedOp = opsResult.operators.find((op: any) => op.name.toLowerCase().includes('tnm') || op.name.toLowerCase().includes('mpamba'));
     }
 
-    // Fallback if none detected
     if (!selectedOp) {
       selectedOp = opsResult.operators[0];
     }

@@ -5,13 +5,14 @@ import { BankerDashboardTemplate } from "@/components/templates/BankerDashboardT
 import { useBanker } from "@/hooks/useBanker";
 
 export default function BankerDashboardPage() {
-  const { groups, approvals, isLoading } = useBanker();
+  const { groups, approvals, isLoading, refresh } = useBanker();
 
   return (
     <BankerDashboardTemplate
       groups={groups}
       approvals={approvals}
       isLoading={isLoading}
+      onRefresh={refresh}
     />
   );
 }

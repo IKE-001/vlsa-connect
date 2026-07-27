@@ -5,16 +5,14 @@
 // Business rule: Only GroupRole.CHAIRPERSON may approve/reject a contribution.
 // Guard reads GroupMember.roleInGroup — NOT User.platformRole.
 // On APPROVE → write ledger entry FIRST, then flip status.
-// Triggers a Health Score recompute.
-//
-// FIX BUG-03: ledger write + status flip now wrapped in one db.$transaction.
-//   If the status update fails, the ledger entry is rolled back too.
+// Triggers a Health Score recompute + Fan-out Notification.
 // =============================================================================
 
 import db from '@/lib/db';
 import { appendLedgerEntry } from '@/services/ledger/appendLedgerEntry';
 import { computeHealthScore } from '@/services/healthScore/computeHealthScore';
 import { saveHealthScore } from '@/services/healthScore/saveHealthScore';
+import { sendFanOutNotification } from '@/services/notifications/sendFanOutNotification';
 import { ApiResponse, ContributionRecord } from '@/types/financial';
 
 interface HandleApproveContributionArgs {
@@ -40,10 +38,16 @@ export async function handleApproveContribution(
     };
   }
 
-  // Validate existence and state OUTSIDE the transaction (no side effects).
+  // Validate existence and state OUTSIDE the transaction
   const contribution = await db.contribution.findUnique({
     where: { id: contributionId },
-    select: { id: true, status: true, groupId: true, amountTambala: true },
+    select: {
+      id: true,
+      status: true,
+      groupId: true,
+      amountTambala: true,
+      member: { select: { userId: true } },
+    },
   });
 
   if (!contribution) {
@@ -57,10 +61,8 @@ export async function handleApproveContribution(
     };
   }
 
-  // BUG-03 FIX: ledger write + status flip in ONE atomic transaction.
   const updated = await db.$transaction(async (tx) => {
     if (action === 'APPROVE') {
-      // Pass tx so the ledger insert shares this transaction.
       await appendLedgerEntry(
         {
           groupId: contribution.groupId,
@@ -82,7 +84,22 @@ export async function handleApproveContribution(
     });
   });
 
-  // Health Score recompute (fire-and-forget — don't block response).
+  // 1. Send Fan-Out Notification to member
+  if (contribution.member?.userId) {
+    const mwkAmount = (contribution.amountTambala / 100).toLocaleString();
+    const title = action === 'APPROVE' ? 'Contribution Approved' : 'Contribution Rejected';
+    const message = action === 'APPROVE'
+      ? `Your cash contribution of ${mwkAmount} MWK has been verified and approved by the Chairperson.`
+      : `Your contribution of ${mwkAmount} MWK was rejected.`;
+    
+    sendFanOutNotification({
+      userId: contribution.member.userId,
+      title,
+      message,
+    }).catch(console.error);
+  }
+
+  // 2. Health Score recompute
   computeHealthScore(contribution.groupId)
     .then((breakdown) => saveHealthScore(contribution.groupId, breakdown))
     .catch(console.error);

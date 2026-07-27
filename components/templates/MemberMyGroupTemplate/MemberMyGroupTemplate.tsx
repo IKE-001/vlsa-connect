@@ -86,7 +86,16 @@ export const MemberMyGroupTemplate: React.FC<MemberMyGroupTemplateProps> = ({
             <h1 className="text-[19px] font-extrabold text-[#1B2321]">My Group</h1>
             <p className="text-[12.5px] text-[#5B6B65] mt-0.5">{groupName} · {inviteCode}</p>
           </div>
-          <Badge variant="green" dot>Active Group</Badge>
+          <div className="flex items-center gap-3">
+            <a
+              href={`/api/ledger/export?groupId=${group?.id}`}
+              download
+              className="inline-flex items-center gap-1.5 text-[12px] font-bold text-[#2D7A52] bg-[#E3F3EA] border border-[#2D7A52]/20 px-3 py-1.5 rounded-full hover:bg-[#2D7A52] hover:text-white transition-colors"
+            >
+              Export Audit CSV
+            </a>
+            <Badge variant="green" dot>Active Group</Badge>
+          </div>
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 md:p-7 flex flex-col gap-5 pb-12">

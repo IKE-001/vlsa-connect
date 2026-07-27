@@ -58,15 +58,25 @@ function MemberDashboardWithGroup({
 
   const { contributions, balanceTambala } = useSavings({ groupId, memberId: myMemberId });
   const { loans, voteLoan } = useLoans({ groupId, callerMemberId: myMemberId });
-  const { meetings, confirmAttendance } = useMeetings(groupId);
+  const { meetings, confirmAttendance, scheduleMeeting, refresh: refreshMeetings } = useMeetings(groupId);
 
   const pendingLoans = loans.filter((l) => l.status === 'PENDING');
   const isGovernanceRole = myRole === 'CHAIRPERSON' || myRole === 'TREASURER' || myRole === 'SECRETARY';
   const isChairperson = myRole === 'CHAIRPERSON';
+  const canSchedule = myRole === 'CHAIRPERSON' || myRole === 'SECRETARY';
 
   const handleUpdateRole = async (memberId: string, role: string) => {
     await api.patch(`/api/groups/${groupId}/members/${memberId}/role`, { role });
     await refresh();
+  };
+
+  const handleScheduleMeeting = async (title: string, scheduledAt: string, location: string, agenda: string) => {
+    await scheduleMeeting({ title, scheduledAt: new Date(scheduledAt).toISOString(), location, agendaNotes: agenda });
+  };
+
+  const handleSaveMinutes = async (meetingId: string, minutes: string) => {
+    await api.post(`/api/meetings/${meetingId}/minutes`, { minutes });
+    await refreshMeetings();
   };
 
   // Governance widgets are shown to Chairperson, Treasurer, and Secretary
@@ -94,7 +104,9 @@ function MemberDashboardWithGroup({
       />
       <UpcomingMeetings
         meetings={meetings}
-        onRSVP={(id) => { void confirmAttendance(id, ''); }}
+        onRSVP={(id) => { void confirmAttendance(id, myMemberId ?? ''); }}
+        onScheduleMeeting={canSchedule ? handleScheduleMeeting : undefined}
+        onSaveMinutes={canSchedule ? handleSaveMinutes : undefined}
       />
     </>
   ) : undefined;
