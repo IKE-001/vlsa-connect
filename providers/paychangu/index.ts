@@ -8,8 +8,9 @@
 
 const BASE_URL = process.env.PAYCHANGU_BASE_URL || 'https://api.paychangu.com';
 const SECRET_KEY = process.env.PAYCHANGU_SECRET_KEY!;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://vlsa-connect.vercel.app';
-const CALLBACK_URL = process.env.PAYCHANGU_CALLBACK_URL || `${APP_URL}/api/payments/callback`;
+// Hardcoded to production URL so PayChangu webhooks always reach the live server
+// (works in both local dev and production since the database is shared on Neon)
+const CALLBACK_URL = 'https://vlsa-connect.vercel.app/api/payments/callback';
 
 export interface InitiatePaymentOptions {
   amountTambala: number;       // Amount in tambala — we convert to MWK internally
