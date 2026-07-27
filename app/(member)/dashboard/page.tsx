@@ -58,6 +58,7 @@ function MemberDashboardWithGroup({
     <MemberDashboardTemplate
       user={profile}
       groupName={groupName}
+      inviteCode={group?.inviteCode ?? "N/A"}
       membersCount={members.length}
       memberBalances={
         balanceTambala !== null

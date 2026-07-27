@@ -25,13 +25,25 @@ const typeColor: Record<string, "green" | "blue" | "purple" | "orange"> = {
   reports: "purple",
 };
 
+const DOC_TYPES = [
+  { value: "minutes",  label: "Meeting Minutes",    desc: "Notes or minutes from a group meeting" },
+  { value: "ledger",   label: "Ledger / Finance",   desc: "Financial records, statements or ledger exports" },
+  { value: "loan",     label: "Loan Document",       desc: "Loan agreements, repayment schedules" },
+  { value: "reports",  label: "General Report",      desc: "Any other group document or report" },
+];
+
 export const MemberDocumentsTemplate: React.FC = () => {
   const [category, setCategory] = useState<DocCategory>("all");
   const [docs, setDocs] = useState<DocRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Upload modal state
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [selectedDocType, setSelectedDocType] = useState("reports");
+  const [uploading, setUploading] = useState(false);
+  const [showTypeModal, setShowTypeModal] = useState(false);
 
   const categories: { key: DocCategory; label: string }[] = [
     { key: "all",     label: "All" },
@@ -59,40 +71,53 @@ export const MemberDocumentsTemplate: React.FC = () => {
 
   useEffect(() => { fetchDocs(); }, []);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Step 1: user picks a file → show type selector modal
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setPendingFile(file);
+    setSelectedDocType("reports");
+    setShowTypeModal(true);
+    // Reset input so same file can be re-selected
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  // Step 2: user confirms type → upload
+  const handleConfirmUpload = async () => {
+    if (!pendingFile) return;
     setUploading(true);
     setUploadError(null);
+    setShowTypeModal(false);
+
     try {
-      // Step 1: Upload file to Cloudinary via /api/media/upload
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", pendingFile);
       const uploadRes = await fetch("/api/media/upload", { method: "POST", body: formData });
       const uploadJson = await uploadRes.json();
+
       if (!uploadRes.ok || !uploadJson.url) {
         throw new Error(uploadJson.error || "Upload failed");
       }
-      // Step 2: Save document record to DB
+
       const groupId = typeof window !== "undefined" ? localStorage.getItem("vsla_active_group_id") ?? "" : "";
       await fetch("/api/member/documents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: file.name,
+          name: pendingFile.name,
           url: uploadJson.url,
-          type: "reports",
+          type: selectedDocType,
           groupId,
-          size: `${(file.size / 1024).toFixed(1)} KB`,
+          size: `${(pendingFile.size / 1024).toFixed(1)} KB`,
         }),
       });
-      // Step 3: Refresh the list
+
       await fetchDocs();
     } catch (err: any) {
       setUploadError(err.message || "Upload failed. Please try again.");
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      setPendingFile(null);
     }
   };
 
@@ -129,6 +154,13 @@ export const MemberDocumentsTemplate: React.FC = () => {
           {uploadError && (
             <div className="bg-red-50 border border-red-200 text-red-700 rounded-[12px] px-4 py-3 text-[13px] font-medium">
               {uploadError}
+            </div>
+          )}
+
+          {uploading && (
+            <div className="bg-[#E3F3EA] border border-[#2D7A52]/30 text-[#2D7A52] rounded-[12px] px-4 py-3 text-[13px] font-medium flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-[#2D7A52] border-t-transparent rounded-full animate-spin" />
+              Uploading document to Cloudinary…
             </div>
           )}
 
@@ -187,6 +219,51 @@ export const MemberDocumentsTemplate: React.FC = () => {
           )}
         </main>
       </div>
+
+      {/* Document type selector modal */}
+      {showTypeModal && pendingFile && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-[20px] p-6 max-w-md w-full shadow-2xl flex flex-col gap-4">
+            <div>
+              <h3 className="text-[17px] font-extrabold text-[#1B2321]">What is this document?</h3>
+              <p className="text-[12.5px] text-[#5B6B65] mt-1">
+                File: <span className="font-semibold text-[#1B2321]">{pendingFile.name}</span>
+                {" · "}{(pendingFile.size / 1024).toFixed(1)} KB
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {DOC_TYPES.map((dt) => (
+                <button
+                  key={dt.value}
+                  type="button"
+                  onClick={() => setSelectedDocType(dt.value)}
+                  className={`w-full text-left px-4 py-3 rounded-[12px] border transition-all ${
+                    selectedDocType === dt.value
+                      ? "bg-[#E3F3EA] border-[#2D7A52]"
+                      : "border-[#E9EDEA] hover:border-[#2D7A52]/50"
+                  }`}
+                >
+                  <div className={`text-[13.5px] font-bold ${selectedDocType === dt.value ? "text-[#2D7A52]" : "text-[#1B2321]"}`}>
+                    {dt.label}
+                  </div>
+                  <div className="text-[11.5px] text-[#94A29C] mt-0.5">{dt.desc}</div>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-3 justify-end mt-1">
+              <Button variant="outline" theme="green" onClick={() => { setShowTypeModal(false); setPendingFile(null); }}>
+                Cancel
+              </Button>
+              <Button theme="green" onClick={handleConfirmUpload}>
+                Upload Document
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <MobileBottomNav />
     </div>
   );

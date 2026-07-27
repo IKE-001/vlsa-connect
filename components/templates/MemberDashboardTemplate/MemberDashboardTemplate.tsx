@@ -21,6 +21,7 @@ type MobileTab = "home" | "savings" | "add" | "loans" | "profile";
 export interface MemberDashboardTemplateProps {
   user: UserProfile | null;
   groupName: string;
+  inviteCode?: string;
   membersCount: number;
   memberBalances: MemberBalanceSummary | null;
   contributions: ContributionRecord[];
@@ -32,6 +33,7 @@ export interface MemberDashboardTemplateProps {
 export const MemberDashboardTemplate: React.FC<MemberDashboardTemplateProps> = ({
   user,
   groupName,
+  inviteCode,
   membersCount,
   memberBalances,
   contributions,
@@ -158,7 +160,7 @@ export const MemberDashboardTemplate: React.FC<MemberDashboardTemplateProps> = (
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 bg-white rounded-[18px] p-5.5 shadow-[0_2px_10px_rgba(18,58,41,0.04)] border border-[#E9EDEA] grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 items-center">
               <QuickInfoTile icon="tag" label="Group Name" value={groupName || "Group"} />
-              <QuickInfoTile icon="hash" label="Group Code" value="TVS-2025-001" />
+              <QuickInfoTile icon="hash" label="Group Code" value={inviteCode || "N/A"} />
               <QuickInfoTile icon="calendar" label="Meeting Day" value="Scheduled" />
               <QuickInfoTile icon="vote" label="Group Type" value="VSLA" />
               <QuickInfoTile icon="users" label="Members" value={`${membersCount} Members`} />
@@ -254,7 +256,7 @@ export const MemberDashboardTemplate: React.FC<MemberDashboardTemplateProps> = (
                 { icon: "arrow-up-circle" as const, label: "Request\nLoan", bg: "bg-[#E6EEFA]", color: "text-[#4A7FC1]", href: "/loans" },
                 { icon: "vote" as const, label: "Vote &\nApprovals", bg: "bg-[#EFE9F9]", color: "text-[#8B6FC7]", href: "/loans" },
                 { icon: "doc" as const, label: "Group\nDocuments", bg: "bg-[#FCEADC]", color: "text-[#E8873A]", href: "/documents" },
-                { icon: "chat" as const, label: "Chat", bg: "bg-[#E3F3EA]", color: "text-[#2D7A52]", href: "/chat" },
+                { icon: "chat" as const, label: "Chat", bg: "bg-[#E3F3EA]", color: "text-[#2D7A52]", href: "/messages" },
               ].map((qa) => (
                 <Link key={qa.label} href={qa.href} className="flex flex-col items-center gap-1.5 w-[19%] active:scale-95 transition-transform cursor-pointer">
                   <div className={`w-12 h-12 rounded-[14px] flex items-center justify-center ${qa.bg} ${qa.color} shadow-xs`}>

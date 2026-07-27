@@ -25,12 +25,14 @@ export default function ChairpersonDashboardPage() {
   if (groupId) setActiveGroupId(groupId);
 
   const { profile } = useProfile();
-  const callerMemberId = profile?.userId ?? '';
-
-  const { loans, voteLoan } = useLoans({ groupId, callerMemberId });
   const { members, groupHealth, groupName } = useGroup(groupId);
   const { meetings, confirmAttendance } = useMeetings(groupId);
 
+  // callerMemberId must be GroupMember.id (not User.id)
+  const myMember = members.find((m) => m.userId === profile?.userId);
+  const callerMemberId = myMember?.id ?? '';
+
+  const { loans, voteLoan } = useLoans({ groupId, callerMemberId });
   const pendingLoans = loans.filter((l) => l.status === 'PENDING');
   // SCHEDULED maps to what was previously called UPCOMING in mock
   const scheduledMeetings = meetings.filter((m) => m.status === 'SCHEDULED');
@@ -91,7 +93,11 @@ export default function ChairpersonDashboardPage() {
           />
         )}
 
-        <LoanVotingPanel pendingLoans={pendingLoans} onVote={voteLoan} />
+        <LoanVotingPanel
+          pendingLoans={pendingLoans}
+          members={members}
+          onVote={voteLoan}
+        />
 
         <GroupDirectory members={members.map((m) => ({
           id: m.id,

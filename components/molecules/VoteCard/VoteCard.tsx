@@ -13,6 +13,7 @@ export interface VoteCardProps {
   amountTambala: number;
   reason?: string;
   requestedDate: string;
+  votes?: Array<{ decision: 'APPROVE' | 'REJECT' }>;
   onVote: (id: string, decision: 'APPROVE' | 'REJECT', note?: string) => void;
 }
 
@@ -23,9 +24,20 @@ export const VoteCard: React.FC<VoteCardProps> = ({
   amountTambala,
   reason,
   requestedDate,
+  votes = [],
   onVote,
 }) => {
   const [note, setNote] = useState('');
+  const [voted, setVoted] = useState(false);
+
+  const approvals = votes.filter((v) => v.decision === 'APPROVE').length;
+  const rejections = votes.filter((v) => v.decision === 'REJECT').length;
+  const requiredVotes = 3;
+
+  const handleVote = (decision: 'APPROVE' | 'REJECT') => {
+    onVote(id, decision, note);
+    setVoted(true);
+  };
 
   return (
     <Card variant="hover" className="space-y-4">
@@ -54,40 +66,66 @@ export const VoteCard: React.FC<VoteCardProps> = ({
         </div>
       </div>
 
+      {/* Vote tally */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+          <Check className="w-3.5 h-3.5" />
+          {approvals}/{requiredVotes} Approved
+        </div>
+        {rejections > 0 && (
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-red-500">
+            <X className="w-3.5 h-3.5" />
+            {rejections} Rejected
+          </div>
+        )}
+        <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-emerald-500 rounded-full transition-all"
+            style={{ width: `${(approvals / requiredVotes) * 100}%` }}
+          />
+        </div>
+      </div>
+
       {reason && (
         <p className="text-xs text-slate-600 dark:text-slate-400 italic">
-          "{reason}"
+          &ldquo;{reason}&rdquo;
         </p>
       )}
 
-      <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-        <Input
-          placeholder="Add optional note/reason for vote..."
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          className="text-xs"
-        />
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="primary"
-            className="flex-1"
-            leftIcon={<Check className="w-4 h-4" />}
-            onClick={() => onVote(id, 'APPROVE', note)}
-          >
-            Approve
-          </Button>
-          <Button
-            size="sm"
-            variant="danger"
-            className="flex-1"
-            leftIcon={<X className="w-4 h-4" />}
-            onClick={() => onVote(id, 'REJECT', note)}
-          >
-            Reject
-          </Button>
+      {voted ? (
+        <p className="text-xs text-emerald-600 font-semibold text-center py-2 bg-emerald-50 rounded-lg">
+          Vote submitted successfully!
+        </p>
+      ) : (
+        <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <Input
+            placeholder="Add optional note/reason for vote..."
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            className="text-xs"
+          />
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="primary"
+              className="flex-1"
+              leftIcon={<Check className="w-4 h-4" />}
+              onClick={() => handleVote('APPROVE')}
+            >
+              Approve
+            </Button>
+            <Button
+              size="sm"
+              variant="danger"
+              className="flex-1"
+              leftIcon={<X className="w-4 h-4" />}
+              onClick={() => handleVote('REJECT')}
+            >
+              Reject
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </Card>
   );
 };

@@ -4,6 +4,7 @@ import React from "react";
 import { MemberMessagesTemplate } from "@/components/templates/MemberMessagesTemplate/MemberMessagesTemplate";
 import { useProfile } from "@/hooks/useProfile";
 import { useChat } from "@/hooks/useChat";
+import { useGroup } from "@/hooks/useGroup";
 import { setActiveGroupId } from "@/lib/api/client";
 
 function getStoredGroupId(): string {
@@ -17,6 +18,7 @@ export default function MessagesPage() {
 
   const { profile } = useProfile();
   const { messages, isSending, sendMessage } = useChat(groupId);
+  const { groupName, members } = useGroup(groupId);
 
   return (
     <MemberMessagesTemplate
@@ -24,6 +26,8 @@ export default function MessagesPage() {
       isSending={isSending}
       currentUserId={profile?.userId ?? ""}
       currentUserName={profile?.fullName ?? "You"}
+      groupName={groupName}
+      membersCount={members.length}
       onSendMessage={sendMessage}
     />
   );

@@ -5,15 +5,28 @@ import { EmptyState } from '@/components/molecules/EmptyState';
 import { LoanWithVotes } from '@/types/financial';
 import { CheckSquare } from 'lucide-react';
 
+interface GroupMember {
+  id: string;
+  userId: string;
+  fullName: string;
+}
+
 export interface LoanVotingPanelProps {
   pendingLoans: LoanWithVotes[];
+  members?: GroupMember[];
   onVote: (loanId: string, decision: 'APPROVE' | 'REJECT', note?: string) => void;
 }
 
 export const LoanVotingPanel: React.FC<LoanVotingPanelProps> = ({
   pendingLoans,
+  members = [],
   onVote,
 }) => {
+  const getMemberName = (memberId: string) => {
+    const m = members.find((mem) => mem.id === memberId);
+    return m?.fullName ?? `Member #${memberId.substring(0, 6)}`;
+  };
+
   return (
     <Card className="space-y-4">
       <div className="flex items-center justify-between">
@@ -39,10 +52,11 @@ export const LoanVotingPanel: React.FC<LoanVotingPanelProps> = ({
             <VoteCard
               key={loan.id}
               id={loan.id}
-              applicantName={`Member ID: ${loan.memberId}`}
+              applicantName={getMemberName(loan.memberId)}
               type="LOAN"
               amountTambala={loan.principalTambala}
               requestedDate={new Date(loan.requestedAt).toLocaleDateString()}
+              votes={loan.votes}
               onVote={onVote}
             />
           ))}
