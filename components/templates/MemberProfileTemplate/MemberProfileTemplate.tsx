@@ -152,6 +152,13 @@ export const MemberProfileTemplate: React.FC<MemberProfileTemplateProps> = ({
               desc: "Contact support, FAQs",
               href: "/profile/support",
               color: "text-[#5B6B65]", bg: "bg-[#F1F4F2]"
+            },
+            {
+              icon: "logout" as IconName,
+              title: "Logout",
+              desc: "Sign out of your account",
+              href: "/logout",
+              color: "text-[#DC4B3F]", bg: "bg-[#FCEAE9]"
             }
           ].map((item, i) => (
             <Link key={i} href={item.href} className="flex items-center gap-4 px-5 py-4 active:bg-[#F7F9F8] transition-colors w-full text-left border-b border-[#EBEFED] last:border-0 group">
