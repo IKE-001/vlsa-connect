@@ -1,3 +1,4 @@
+import { getCallerUserId } from '@/lib/utils/getCallerUserId';
 import { NextRequest, NextResponse } from 'next/server';
 import { ScheduleMeetingSchema } from '@/lib/validations/meetings';
 import { MeetingsController } from '@/controllers/meetings/meetings.controller';
@@ -5,7 +6,7 @@ import db from '@/lib/db';
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-caller-user-id');
+    const userId = await getCallerUserId(req);
     if (!userId) return NextResponse.json({ success: false, error: 'Unauthorized.' }, { status: 401 });
 
     const body = await req.json();
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-caller-user-id');
+    const userId = await getCallerUserId(req);
     if (!userId) return NextResponse.json({ success: false, error: 'Unauthorized.' }, { status: 401 });
 
     const { searchParams } = new URL(req.url);

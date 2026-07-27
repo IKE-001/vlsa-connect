@@ -1,3 +1,4 @@
+import { getCallerUserId } from '@/lib/utils/getCallerUserId';
 import { NextRequest, NextResponse } from 'next/server';
 import { UpdateRoleSchema } from '@/lib/validations/groups';
 import { GroupsController } from '@/controllers/groups/groups.controller';
@@ -8,7 +9,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string, memberId: string }> }
 ) {
   try {
-    const userId = req.headers.get('x-caller-user-id');
+    const userId = await getCallerUserId(req);
     if (!userId) return NextResponse.json({ success: false, error: 'Unauthorized.' }, { status: 401 });
 
     const { id: groupId, memberId } = await params;

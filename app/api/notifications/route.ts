@@ -1,3 +1,4 @@
+import { getCallerUserId } from '@/lib/utils/getCallerUserId';
 // =============================================================================
 // app/api/notifications/route.ts
 // Owned by: Orama (Auth & Governance)
@@ -11,7 +12,7 @@ import { getNotifications } from '@/services/notifications/getNotifications';
 export async function GET(req: NextRequest) {
   try {
     // 1. Authenticate caller
-    const userId = req.headers.get('x-caller-user-id');
+    const userId = await getCallerUserId(req);
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized.' }, { status: 401 });
     }

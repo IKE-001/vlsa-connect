@@ -1,3 +1,4 @@
+import { getCallerUserId } from '@/lib/utils/getCallerUserId';
 import { NextRequest, NextResponse } from 'next/server';
 import { RecordAttendanceSchema } from '@/lib/validations/meetings';
 import { MeetingsController } from '@/controllers/meetings/meetings.controller';
@@ -8,7 +9,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = req.headers.get('x-caller-user-id');
+    const userId = await getCallerUserId(req);
     if (!userId) return NextResponse.json({ success: false, error: 'Unauthorized.' }, { status: 401 });
 
     const { id: meetingId } = await params;

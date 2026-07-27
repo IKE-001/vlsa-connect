@@ -1,3 +1,4 @@
+import { getCallerUserId } from '@/lib/utils/getCallerUserId';
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { format } from "date-fns";
@@ -6,7 +7,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const groupId = searchParams.get("groupId");
-    const userId = req.headers.get("x-caller-user-id");
+    const userId = await getCallerUserId(req);
 
     if (!userId) {
       return NextResponse.json({ success: false, error: "Unauthorized." }, { status: 401 });

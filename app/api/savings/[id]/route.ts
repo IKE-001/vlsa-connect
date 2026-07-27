@@ -1,3 +1,4 @@
+import { getCallerUserId } from '@/lib/utils/getCallerUserId';
 // =============================================================================
 // app/api/savings/[id]/route.ts
 // Owned by: Jabari (Financial Logic)
@@ -23,7 +24,7 @@ export async function PATCH(
 
     // x-caller-group-role → GroupMember.roleInGroup (must be CHAIRPERSON)
     const callerGroupRole = req.headers.get('x-caller-group-role') ?? '';
-    const callerUserId = req.headers.get('x-caller-user-id') ?? '';
+    const callerUserId = await getCallerUserId(req) ?? '';
 
     const result = await handleApproveContribution({
       contributionId: id,

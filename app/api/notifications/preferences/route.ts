@@ -1,3 +1,4 @@
+import { getCallerUserId } from '@/lib/utils/getCallerUserId';
 // =============================================================================
 // app/api/notifications/preferences/route.ts
 // Owned by: Orama (Auth & Governance)
@@ -18,7 +19,7 @@ const UpdatePreferencesSchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-caller-user-id');
+    const userId = await getCallerUserId(req);
     if (!userId) return NextResponse.json({ success: false, error: 'Unauthorized.' }, { status: 401 });
 
     const prefs = await getNotificationPreferences(userId);
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-caller-user-id');
+    const userId = await getCallerUserId(req);
     if (!userId) return NextResponse.json({ success: false, error: 'Unauthorized.' }, { status: 401 });
 
     const body = await req.json();

@@ -1,9 +1,10 @@
+import { getCallerUserId } from '@/lib/utils/getCallerUserId';
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.headers.get("x-caller-user-id");
+    const userId = await getCallerUserId(req);
     const role = req.headers.get("x-caller-platform-role");
 
     // if (!userId || role !== "ADMIN") {

@@ -1,3 +1,4 @@
+import { getCallerUserId } from '@/lib/utils/getCallerUserId';
 // app/api/auth/2fa/enable/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { handleEnable2fa } from '@/controllers/auth/handleEnable2fa';
@@ -5,7 +6,7 @@ import { Enable2faSchema } from '@/lib/validations/auth';
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-caller-user-id') ?? '';
+    const userId = await getCallerUserId(req) ?? '';
     if (!userId) return NextResponse.json({ success: false, error: 'Unauthenticated.' }, { status: 401 });
 
     const parsed = Enable2faSchema.safeParse(await req.json());

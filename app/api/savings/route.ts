@@ -1,3 +1,4 @@
+import { getCallerUserId } from '@/lib/utils/getCallerUserId';
 // =============================================================================
 // app/api/savings/route.ts
 // Owned by: Jabari (Financial Logic)
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
     // x-caller-group-role → GroupMember.roleInGroup (e.g. TREASURER)
     // x-caller-user-id    → User.id of the caller
     const callerGroupRole = req.headers.get('x-caller-group-role') ?? '';
-    const callerUserId = req.headers.get('x-caller-user-id') ?? '';
+    const callerUserId = await getCallerUserId(req) ?? '';
 
     const result = await handleCreateContribution({ ...parsed.data, callerGroupRole, callerUserId });
     return NextResponse.json(result, { status: result.success ? 201 : 403 });
