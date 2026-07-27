@@ -78,7 +78,7 @@ export function useSavings({ groupId, memberId }: UseSavingsOptions) {
       method: 'CASH' | 'MOBILE_MONEY' | 'CARD',
       cyclePeriod?: string
     ): Promise<{ checkoutUrl?: string }> => {
-      const res = await api.post<{ success: boolean; data: { checkoutUrl?: string } }>('/api/savings', {
+      const res = await api.post<{ checkoutUrl?: string }>('/api/savings', {
         groupId,
         memberId: targetMemberId,
         amountTambala,
@@ -86,7 +86,7 @@ export function useSavings({ groupId, memberId }: UseSavingsOptions) {
         ...(cyclePeriod ? { cyclePeriod } : {}),
       });
       await fetchSavings();
-      return { checkoutUrl: (res as any)?.data?.checkoutUrl };
+      return { checkoutUrl: res?.checkoutUrl };
     },
     [groupId, fetchSavings]
   );

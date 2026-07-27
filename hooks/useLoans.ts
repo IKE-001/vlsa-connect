@@ -89,12 +89,13 @@ export function useLoans({ groupId, memberId, callerMemberId }: UseLoansOptions)
       method: 'CASH' | 'MOBILE_MONEY' | 'CARD',
       paychanguRef?: string
     ) => {
-      await api.post(`/api/loans/${loanId}/repay`, {
+      const res = await api.post<{ checkoutUrl?: string }>(`/api/loans/${loanId}/repay`, {
         amountTambala,
         method,
         ...(paychanguRef ? { paychanguRef } : {}),
       });
       await fetchLoans();
+      return { checkoutUrl: res?.checkoutUrl };
     },
     [fetchLoans]
   );

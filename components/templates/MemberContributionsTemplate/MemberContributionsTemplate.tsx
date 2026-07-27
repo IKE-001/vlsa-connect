@@ -126,7 +126,7 @@ export const MemberContributionsTemplate: React.FC<MemberContributionsTemplatePr
                       : "border-[#E9EDEA] text-[#94A29C] hover:border-[#2D7A52]"
                   }`}
                 >
-                  Mobile Money
+                  Online Payment (Airtel, TNM or Bank via PayChangu)
                 </button>
                 <button
                   type="button"
@@ -152,7 +152,7 @@ export const MemberContributionsTemplate: React.FC<MemberContributionsTemplatePr
             <div className="flex gap-3 justify-end mt-2">
               <Button variant="outline" theme="green" onClick={() => setShowModal(false)}>Cancel</Button>
               <Button theme="green" onClick={handleSubmit} disabled={submitting}>
-                {submitting ? "Processing…" : payMethod === "MOBILE_MONEY" ? "Pay Online" : "Confirm"}
+                {submitting ? "Processing…" : payMethod === "MOBILE_MONEY" ? "Pay Online Now" : "Confirm Cash"}
               </Button>
             </div>
           </div>
