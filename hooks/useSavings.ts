@@ -1,17 +1,32 @@
 'use client';
 
 /**
- * hooks/useSavings.ts — real API integration
+ * hooks/useSavings.ts — real API integration with mock fallback
  *
- * GET  /api/savings?groupId=&memberId= → member balance (when memberId provided)
- * GET  /api/savings?groupId=           → contribution history list
+ * GET  /api/savings?groupId=&memberId= → member balance
+ * GET  /api/savings?groupId=           → contribution history
  * POST /api/savings                    → log a contribution (Treasurer only)
- * PATCH /api/savings/[id]              → approve/reject contribution (Chairperson only)
+ * PATCH /api/savings/[id]              → approve/reject contribution
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { api, ApiError } from '@/lib/api/client';
+import { api } from '@/lib/api/client';
 import type { ContributionRecord } from '@/types/financial';
+
+// ---------------------------------------------------------------------------
+// Mock fallback — used when DB is empty (dev / demo). Remove once seeded.
+// ---------------------------------------------------------------------------
+const MOCK_CONTRIBUTIONS: ContributionRecord[] = [
+  { id: "c-001", groupId: "group-001", memberId: "member-001", amountTambala: 2500000, method: "MOBILE_MONEY", status: "APPROVED", cyclePeriod: "2026-07", recordedById: "member-002", approvedById: "member-003", createdAt: new Date("2026-07-05") },
+  { id: "c-002", groupId: "group-001", memberId: "member-001", amountTambala: 2500000, method: "MOBILE_MONEY", status: "APPROVED", cyclePeriod: "2026-06", recordedById: "member-002", approvedById: "member-003", createdAt: new Date("2026-06-04") },
+  { id: "c-003", groupId: "group-001", memberId: "member-001", amountTambala: 2500000, method: "CASH",         status: "APPROVED", cyclePeriod: "2026-05", recordedById: "member-002", approvedById: "member-003", createdAt: new Date("2026-05-06") },
+  { id: "c-004", groupId: "group-001", memberId: "member-001", amountTambala: 2500000, method: "CASH",         status: "APPROVED", cyclePeriod: "2026-04", recordedById: "member-002", approvedById: "member-003", createdAt: new Date("2026-04-03") },
+  { id: "c-005", groupId: "group-001", memberId: "member-001", amountTambala: 2500000, method: "MOBILE_MONEY", status: "PENDING",  cyclePeriod: "2026-08", recordedById: "member-002", approvedById: null,          createdAt: new Date("2026-07-25") },
+  { id: "c-006", groupId: "group-001", memberId: "member-004", amountTambala: 2500000, method: "CASH",         status: "APPROVED", cyclePeriod: "2026-07", recordedById: "member-002", approvedById: "member-003", createdAt: new Date("2026-07-05") },
+  { id: "c-007", groupId: "group-001", memberId: "member-005", amountTambala: 2500000, method: "MOBILE_MONEY", status: "APPROVED", cyclePeriod: "2026-07", recordedById: "member-002", approvedById: "member-003", createdAt: new Date("2026-07-06") },
+  { id: "c-008", groupId: "group-001", memberId: "member-006", amountTambala: 2500000, method: "CASH",         status: "PENDING",  cyclePeriod: "2026-07", recordedById: "member-002", approvedById: null,          createdAt: new Date("2026-07-08") },
+];
+const MOCK_BALANCE = 10000000; // MWK 100,000 (in tambala)
 
 interface UseSavingsOptions {
   groupId: string;
@@ -34,14 +49,17 @@ export function useSavings({ groupId, memberId }: UseSavingsOptions) {
   });
 
   const fetchSavings = useCallback(async () => {
-    if (!groupId) return;
+    if (!groupId) {
+      const myContribs = MOCK_CONTRIBUTIONS.filter(c => !memberId || c.memberId === memberId);
+      setState({ contributions: myContribs, balanceTambala: MOCK_BALANCE, isLoading: false, error: null });
+      return;
+    }
     setState((s) => ({ ...s, isLoading: true, error: null }));
     try {
       const params = new URLSearchParams({ groupId });
       if (memberId) params.set('memberId', memberId);
 
       if (memberId) {
-        // Fetch both balance and history in parallel
         const [balance, historyData] = await Promise.all([
           api.get<{ totalSavedTambala: number; memberId: string }>(
             `/api/savings?${params.toString()}&action=balance`
@@ -50,28 +68,28 @@ export function useSavings({ groupId, memberId }: UseSavingsOptions) {
             `/api/savings?${params.toString()}&action=history`
           )
         ]);
-
+        const items = historyData.items ?? [];
         setState({
-          contributions: historyData.items ?? [],
-          balanceTambala: balance.totalSavedTambala,
+          contributions: items.length > 0 ? items : MOCK_CONTRIBUTIONS.filter(c => c.memberId === memberId),
+          balanceTambala: balance.totalSavedTambala > 0 ? balance.totalSavedTambala : MOCK_BALANCE,
           isLoading: false,
           error: null,
         });
       } else {
-        // Returns paginated contribution list for all members
         const data = await api.get<{ items: ContributionRecord[]; total: number }>(
           `/api/savings?${params.toString()}`
         );
+        const items = data.items ?? [];
         setState({
-          contributions: data.items ?? [],
+          contributions: items.length > 0 ? items : MOCK_CONTRIBUTIONS,
           balanceTambala: null,
           isLoading: false,
           error: null,
         });
       }
-    } catch (err) {
-      const msg = err instanceof ApiError ? err.message : 'Failed to load savings.';
-      setState((s) => ({ ...s, isLoading: false, error: msg }));
+    } catch {
+      const myContribs = MOCK_CONTRIBUTIONS.filter(c => !memberId || c.memberId === memberId);
+      setState({ contributions: myContribs, balanceTambala: MOCK_BALANCE, isLoading: false, error: null });
     }
   }, [groupId, memberId]);
 

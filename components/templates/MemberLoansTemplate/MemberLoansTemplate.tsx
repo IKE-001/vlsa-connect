@@ -1,7 +1,7 @@
 "use client";
 
 import { MobileBottomNav } from "@/components/organisms/MobileBottomNav/MobileBottomNav";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Icon } from "@/components/atoms/Icon/Icon";
 import { MemberSidebar } from "@/components/organisms/MemberSidebar/MemberSidebar";
 import { StatCard } from "@/components/molecules/StatCard/StatCard";
@@ -44,6 +44,23 @@ export const MemberLoansTemplate: React.FC<MemberLoansTemplateProps> = ({
   const [repayAmount, setRepayAmount] = useState("");
   const [repayMethod, setRepayMethod] = useState<"MOBILE_MONEY" | "CASH">("MOBILE_MONEY");
   const [repaySubmitting, setRepaySubmitting] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "PENDING" | "REPAID">("ALL");
+
+  const filtered = useMemo(() => {
+    return loans
+      .filter((l) => {
+        if (statusFilter === "ACTIVE")  return ["DISBURSED", "REPAYING", "OVERDUE"].includes(l.status);
+        if (statusFilter === "PENDING") return l.status === "PENDING";
+        if (statusFilter === "REPAID")  return l.status === "REPAID";
+        return true;
+      })
+      .filter((l) => {
+        if (!search.trim()) return true;
+        const q = search.toLowerCase();
+        return l.id.toLowerCase().includes(q) || l.status.toLowerCase().includes(q);
+      });
+  }, [loans, statusFilter, search]);
 
   const activeLoans = loans.filter((l) =>
     l.status === "DISBURSED" || l.status === "REPAYING" || l.status === "OVERDUE"
@@ -101,14 +118,43 @@ export const MemberLoansTemplate: React.FC<MemberLoansTemplateProps> = ({
             <StatCard variant="member" icon="star" iconBgColor="purple" value={String(loans.filter(l => l.status === "PENDING").length)} label="Pending Applications" linkText="View terms" />
           </div>
 
+          {/* Filter tabs + search */}
+          <div className="flex flex-col gap-2.5">
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {(["ALL", "ACTIVE", "PENDING", "REPAID"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setStatusFilter(tab)}
+                  className={`px-4 py-1.5 rounded-[8px] text-[12.5px] font-bold border transition-all whitespace-nowrap ${
+                    statusFilter === tab
+                      ? "bg-[#2D7A52] text-white border-[#2D7A52]"
+                      : "bg-white text-[#5B6B65] border-[#E9EDEA] hover:border-[#2D7A52]/40"
+                  }`}
+                >
+                  {tab === "ALL" ? "All Loans" : tab === "ACTIVE" ? "Active" : tab === "PENDING" ? "Pending" : "Repaid"}
+                </button>
+              ))}
+            </div>
+            <div className="relative">
+              <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#94A29C]" />
+              <input
+                type="text"
+                placeholder="Search by loan ID or status…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full bg-white border border-[#E9EDEA] rounded-[10px] pl-9 pr-3 py-2 text-[12.5px] text-[#1B2321] placeholder:text-[#94A29C] focus:outline-none focus:border-[#2D7A52] transition-colors"
+              />
+            </div>
+          </div>
+
           {isLoading && <div className="py-8 text-center text-sm text-[#94A29C]">Loading loans…</div>}
-          {!isLoading && loans.length === 0 && (
+          {!isLoading && filtered.length === 0 && (
             <div className="bg-white rounded-[18px] p-8 text-center text-sm text-[#94A29C] border border-[#E9EDEA]">
-              No loan records found. Apply for your first loan!
+              {loans.length === 0 ? "No loan records found. Apply for your first loan!" : "No loans match your filter."}
             </div>
           )}
 
-          {loans.map((loan) => {
+          {filtered.map((loan) => {
             const badge = STATUS_BADGE[loan.status] ?? { variant: "blue" as const, label: loan.status };
             return (
               <div key={loan.id} className="bg-white rounded-[18px] p-5.5 shadow-[0_2px_10px_rgba(18,58,41,0.04)] border border-[#E9EDEA]">

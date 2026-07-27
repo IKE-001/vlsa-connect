@@ -12,6 +12,7 @@ import { useSavings } from "@/hooks/useSavings";
 import { useLoans } from "@/hooks/useLoans";
 import { useMeetings } from "@/hooks/useMeetings";
 import { useGroup } from "@/hooks/useGroup";
+import { useNotifications } from "@/hooks/useNotifications";
 import { setActiveGroupId } from "@/lib/api/client";
 
 function getStoredGroupId(): string {
@@ -59,6 +60,7 @@ function MemberDashboardWithGroup({
   const { contributions, balanceTambala } = useSavings({ groupId, memberId: myMemberId });
   const { loans, voteLoan } = useLoans({ groupId, callerMemberId: myMemberId });
   const { meetings, confirmAttendance } = useMeetings(groupId);
+  const { unreadCount } = useNotifications(20);
 
   const pendingLoans = loans.filter((l) => l.status === 'PENDING');
   const isGovernanceRole = myRole === 'CHAIRPERSON' || myRole === 'TREASURER' || myRole === 'SECRETARY';
@@ -86,7 +88,7 @@ function MemberDashboardWithGroup({
       />
       <UpcomingMeetings
         meetings={meetings}
-        onRSVP={(id) => { void confirmAttendance(id, ''); }}
+        onRSVP={(id) => { if (myMemberId) void confirmAttendance(id, myMemberId); }}
       />
     </>
   ) : undefined;
@@ -113,6 +115,7 @@ function MemberDashboardWithGroup({
       meetings={meetings}
       totalGroupSavings={group?.totalPoolTambala ?? 0}
       governanceWidgets={governanceWidgets}
+      unreadCount={unreadCount}
     />
   );
 }

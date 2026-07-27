@@ -79,7 +79,6 @@ export const MobileBottomNav: React.FC = () => {
                   <Icon name="arrow-up-circle" className="w-[24px] h-[24px]" />
                 </div>
                 <span className="text-[11px] font-bold text-[#5B6B65] text-center leading-tight">Withdrawals</span>
-                <span className="absolute -top-1.5 right-1 bg-[#E8873A] border-2 border-white text-white text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center shadow-sm">2</span>
               </Link>
 
               <Link href="/documents" className="flex flex-col items-center gap-2.5 group">
@@ -105,6 +104,13 @@ export const MobileBottomNav: React.FC = () => {
                 </div>
                 <span className="text-[11px] font-bold text-[#5B6B65] text-center leading-tight">AI Help</span>
               </Link>
+
+              <Link href="/transactions" className="flex flex-col items-center gap-2.5 group">
+                <div className="w-[50px] h-[50px] rounded-[16px] bg-[#F1F4F2] text-[#1B2321] flex items-center justify-center group-active:scale-95 transition-all shadow-sm group-hover:bg-[#E3F3EA] group-hover:text-[#2D7A52]">
+                  <Icon name="layers" className="w-[24px] h-[24px]" />
+                </div>
+                <span className="text-[11px] font-bold text-[#5B6B65] text-center leading-tight">History</span>
+              </Link>
             </div>
           </div>
         </div>
@@ -113,7 +119,7 @@ export const MobileBottomNav: React.FC = () => {
       {/* Main Bottom Nav Bar */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-[#EBEFED] h-[82px] flex items-start justify-around pt-3 z-50 shadow-[0_-8px_30px_rgba(18,58,41,0.04)]">
         <NavItem href="/dashboard" icon="grid" label="Home" />
-        <NavItem href="/savings-goal" icon="layers" label="Savings" />
+        <NavItem href="/transactions" icon="layers" label="History" />
         
         <button 
           onClick={() => setIsMenuOpen(!isMenuOpen)}

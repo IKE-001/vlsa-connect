@@ -46,7 +46,7 @@ export const LandingHeader = () => {
 
         {/* Desktop Nav */}
         <div className="hidden lg:flex items-center gap-10 text-[13px] font-bold tracking-wide uppercase">
-          <Link href="#" className={`${scrolled ? 'text-zinc-600 hover:text-[#0F4C36]' : 'text-white/90 hover:text-white'} transition-colors`}>Home</Link>
+          <Link href="/" className={`${scrolled ? 'text-zinc-600 hover:text-[#0F4C36]' : 'text-white/90 hover:text-white'} transition-colors`}>Home</Link>
           <Link href="#features" className={`${scrolled ? 'text-zinc-600 hover:text-[#0F4C36]' : 'text-white/80 hover:text-white'} transition-colors`}>About Us</Link>
           <Link href="#how-it-works" className={`${scrolled ? 'text-zinc-600 hover:text-[#0F4C36]' : 'text-white/80 hover:text-white'} transition-colors`}>Process</Link>
           <Link href="#impact" className={`${scrolled ? 'text-zinc-600 hover:text-[#0F4C36]' : 'text-white/80 hover:text-white'} transition-colors`}>Impact</Link>
@@ -91,7 +91,7 @@ export const LandingHeader = () => {
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div className="absolute top-full left-0 right-0 bg-white/95 backdrop-blur-xl text-zinc-900 shadow-2xl flex flex-col p-8 gap-6 font-bold text-sm lg:hidden border-b border-zinc-200">
-          <Link href="#" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#0F4C36] transition-colors">Home</Link>
+          <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#0F4C36] transition-colors">Home</Link>
           <Link href="#features" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#0F4C36] transition-colors">About Us</Link>
           <Link href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#0F4C36] transition-colors">Process</Link>
           <Link href="#impact" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#0F4C36] transition-colors">Impact</Link>

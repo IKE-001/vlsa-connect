@@ -18,13 +18,14 @@ const navItems: NavItemData[] = [
   { label: "Contributions", icon: "arrow-down-circle",href: "/contributions" },
   { label: "Loans",         icon: "hand-coin",        href: "/loans" },
   { label: "Withdrawals",   icon: "arrow-up-circle",  href: "/withdrawals" },
+  { label: "Transactions",  icon: "layers",           href: "/transactions" },
   { label: "Savings Goal",  icon: "goal",             href: "/savings-goal" },
   { label: "Messages",      icon: "chat",             href: "/messages" },
   { label: "Documents",     icon: "doc",              href: "/documents" },
   { label: "Notifications", icon: "bell",             href: "/notifications" },
   { label: "AI Assistant",  icon: "sparkle",          href: "/ai-assistant" },
   { label: "Profile",       icon: "user",             href: "/profile" },
-  { label: "Support",       icon: "support",          href: "#" },
+  { label: "Support",       icon: "support",          href: "/profile/support" },
 ];
 
 interface MemberSidebarProps {

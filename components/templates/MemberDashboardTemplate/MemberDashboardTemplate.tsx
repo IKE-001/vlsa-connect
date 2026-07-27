@@ -29,6 +29,7 @@ export interface MemberDashboardTemplateProps {
   meetings: MeetingRecord[];
   totalGroupSavings: number;
   governanceWidgets?: React.ReactNode;
+  unreadCount?: number;
 }
 
 export const MemberDashboardTemplate: React.FC<MemberDashboardTemplateProps> = ({
@@ -42,6 +43,7 @@ export const MemberDashboardTemplate: React.FC<MemberDashboardTemplateProps> = (
   meetings,
   totalGroupSavings,
   governanceWidgets,
+  unreadCount = 0,
 }) => {
   const [mobileTab, setMobileTab] = useState<MobileTab>("home");
   const [showBalance, setShowBalance] = useState<boolean>(true);
@@ -86,7 +88,7 @@ export const MemberDashboardTemplate: React.FC<MemberDashboardTemplateProps> = (
             <div className="relative text-[#5B6B65] cursor-pointer hover:text-[#1B2321] transition-colors p-1">
               <Icon name="bell" className="w-5 h-5" />
               <span className="absolute top-0 right-0 bg-[#DC4B3F] text-white text-[9.5px] font-bold w-[15px] h-[15px] rounded-full flex items-center justify-center border-2 border-white animate-pulse">
-                0
+                {unreadCount > 0 ? unreadCount : ''}
               </span>
             </div>
             <div className="flex items-center gap-2.5 pl-3 border-l border-[#E9EDEA]">
