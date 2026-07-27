@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { setActiveGroupId } from '@/lib/api/client';
+import { Key, PlusCircle, CheckCircle, Hand } from 'lucide-react';
 
 /* ─── Design tokens ────────────────────────────────────────────── */
 const brandGreen = '#2E7D46';
@@ -178,8 +179,8 @@ function CreateGroupPanel({ onSuccess }: { onSuccess: (groupId: string, inviteCo
 
   return (
     <div>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 sm:gap-x-3">
+        <div className="sm:col-span-2">
           <Field label="Group Name">
             <input
               value={form.name}
@@ -219,7 +220,7 @@ function CreateGroupPanel({ onSuccess }: { onSuccess: (groupId: string, inviteCo
           />
         </Field>
 
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <Field label="Meeting Cycle">
             <select
               value={form.cycleFrequency}
@@ -236,7 +237,7 @@ function CreateGroupPanel({ onSuccess }: { onSuccess: (groupId: string, inviteCo
           </Field>
         </div>
 
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <Field label="Meeting Location (optional)">
             <input
               value={form.meetingLocation}
@@ -289,8 +290,8 @@ function GroupCreatedModal({ inviteCode, onContinue }: { inviteCode: string; onC
           </svg>
         </div>
 
-        <h2 className="mb-1 text-center text-[18px] font-extrabold" style={{ color: inkColor }}>
-          Group Created! 🎉
+        <h2 className="mb-1 text-center text-[18px] font-extrabold flex items-center justify-center gap-2" style={{ color: inkColor }}>
+          <CheckCircle className="text-[#2E7D46]" size={20} /> Group Created!
         </h2>
         <p className="mb-5 text-center text-[13px]" style={{ color: inkSoft }}>
           Share this invite code with your group members so they can join.
@@ -370,8 +371,8 @@ export function GroupOnboarding({ userName }: { userName?: string }) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
-            <h1 className="text-[22px] font-extrabold" style={{ color: inkColor }}>
-              Welcome{userName ? `, ${userName.split(' ')[0]}` : ''}! 👋
+            <h1 className="text-[22px] font-extrabold flex items-center justify-center gap-2" style={{ color: inkColor }}>
+              Welcome{userName ? `, ${userName.split(' ')[0]}` : ''}! <Hand className="text-gray-500" size={22} />
             </h1>
             <p className="mt-1.5 text-[13.5px]" style={{ color: inkSoft }}>
               You&apos;re not in any VSLA group yet. Join an existing group or create your own.
@@ -397,7 +398,17 @@ export function GroupOnboarding({ userName }: { userName?: string }) {
                     boxShadow: tab === t ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
                   }}
                 >
-                  {t === 'join' ? '🔑 Join a Group' : '✨ Create a Group'}
+                  <span className="flex items-center justify-center gap-1.5">
+                    {t === 'join' ? (
+                      <>
+                        <Key size={15} /> Join a Group
+                      </>
+                    ) : (
+                      <>
+                        <PlusCircle size={15} /> Create a Group
+                      </>
+                    )}
+                  </span>
                 </button>
               ))}
             </div>
