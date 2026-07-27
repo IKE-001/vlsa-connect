@@ -1,7 +1,7 @@
 "use client";
 
 import { MobileBottomNav } from "@/components/organisms/MobileBottomNav/MobileBottomNav";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Icon } from "@/components/atoms/Icon/Icon";
 import { MemberSidebar } from "@/components/organisms/MemberSidebar/MemberSidebar";
 import { StatCard } from "@/components/molecules/StatCard/StatCard";
@@ -36,26 +36,24 @@ export const MemberContributionsTemplate: React.FC<MemberContributionsTemplatePr
   const [phone, setPhone] = useState("");
   const [payMethod, setPayMethod] = useState<"MOBILE_MONEY" | "CASH">("MOBILE_MONEY");
   const [submitting, setSubmitting] = useState(false);
+  const [search, setSearch] = useState("");
 
-  // Search and Filter
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const filtered = useMemo(() => {
+    if (!search.trim()) return contributions;
+    const q = search.toLowerCase();
+    return contributions.filter(
+      (c) =>
+        (c.cyclePeriod ?? "").toLowerCase().includes(q) ||
+        c.method.toLowerCase().includes(q) ||
+        c.status.toLowerCase().includes(q)
+    );
+  }, [contributions, search]);
 
-  const approvedContributions = contributions.filter((c) => c.status === "APPROVED");
-  const pendingContributions = contributions.filter((c) => c.status === "PENDING");
-  const compliance = contributions.length > 0
-    ? Math.round((approvedContributions.length / contributions.length) * 100)
+  const approvedContributions = filtered.filter((c) => c.status === "APPROVED");
+  const pendingContributions = filtered.filter((c) => c.status === "PENDING");
+  const compliance = filtered.length > 0
+    ? Math.round((approvedContributions.length / filtered.length) * 100)
     : 100;
-
-  const filteredContributions = contributions.filter((c) => {
-    const matchesSearch =
-      (c.cyclePeriod ?? "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.method.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.amountTambala / 100).toString().includes(searchQuery);
-
-    if (statusFilter === "ALL") return matchesSearch;
-    return matchesSearch && c.status === statusFilter;
-  });
 
   const handleSubmit = async () => {
     const amountNum = parseInt(amount) * 100; // Convert MWK to tambala
@@ -95,45 +93,30 @@ export const MemberContributionsTemplate: React.FC<MemberContributionsTemplatePr
             <StatCard variant="member" icon="goal" iconBgColor="purple" value={`${compliance}%`} label="Payment Compliance" linkText="View badge" />
           </div>
 
-          <div className="bg-white rounded-[18px] p-5.5 shadow-[0_2px_10px_rgba(18,58,41,0.04)] border border-[#E9EDEA] flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div>
-                <h2 className="text-[15px] font-extrabold text-[#1B2321]">Contribution History</h2>
-                <span className="text-[12px] text-[#94A29C] font-semibold">Showing {filteredContributions.length} of {contributions.length} entries</span>
-              </div>
+          <div className="bg-white rounded-[18px] p-5.5 shadow-[0_2px_10px_rgba(18,58,41,0.04)] border border-[#E9EDEA]">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[15px] font-extrabold text-[#1B2321]">Contribution History</h2>
+              <span className="text-[12px] text-[#94A29C] font-semibold">Showing {filtered.length} entries</span>
+            </div>
 
-              {/* Search & Filter */}
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <div className="relative flex-1 sm:w-56">
-                  <input
-                    type="text"
-                    placeholder="Search amount or cycle..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full text-[12.5px] pl-8 pr-3 py-1.5 border border-[#E9EDEA] rounded-[10px] focus:outline-none focus:border-[#2D7A52]"
-                  />
-                  <Icon name="search" className="w-3.5 h-3.5 text-[#94A29C] absolute left-2.5 top-2.5" />
-                </div>
-
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="text-[12.5px] font-bold border border-[#E9EDEA] rounded-[10px] px-3 py-1.5 text-[#1B2321] bg-white focus:outline-none focus:border-[#2D7A52]"
-                >
-                  <option value="ALL">All Status</option>
-                  <option value="APPROVED">Approved</option>
-                  <option value="PENDING">Pending</option>
-                  <option value="REJECTED">Rejected</option>
-                </select>
-              </div>
+            {/* Search */}
+            <div className="relative mb-3">
+              <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#94A29C]" />
+              <input
+                type="text"
+                placeholder="Search by month, method, status…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full bg-[#F7F9F8] border border-[#E9EDEA] rounded-[10px] pl-9 pr-3 py-2 text-[12.5px] text-[#1B2321] placeholder:text-[#94A29C] focus:outline-none focus:border-[#2D7A52] transition-colors"
+              />
             </div>
 
             <div className="flex flex-col">
               {isLoading && <div className="py-8 text-center text-sm text-[#94A29C]">Loading contributions…</div>}
-              {!isLoading && filteredContributions.length === 0 && (
-                <div className="py-8 text-center text-sm text-[#94A29C]">No contributions match your search or filter.</div>
+              {!isLoading && filtered.length === 0 && (
+                <div className="py-8 text-center text-sm text-[#94A29C]">No contributions found.</div>
               )}
-              {filteredContributions.map((c) => (
+              {filtered.map((c) => (
                 <TransactionRow
                   key={c.id}
                   icon="arrow-down-circle"
@@ -154,6 +137,7 @@ export const MemberContributionsTemplate: React.FC<MemberContributionsTemplatePr
           <div className="bg-white rounded-[20px] p-6 max-w-md w-full shadow-2xl flex flex-col gap-4">
             <h3 className="text-[17px] font-extrabold text-[#1B2321]">Make New Contribution</h3>
             <Input label="Contribution Amount (MWK)" placeholder="e.g. 250" theme="green" fullWidth value={amount} onChange={(e) => setAmount(e.target.value)} />
+            {/* Payment method selector */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[12.5px] font-semibold text-[#5B6B65]">Payment Method</label>
               <div className="flex gap-2">
@@ -203,3 +187,4 @@ export const MemberContributionsTemplate: React.FC<MemberContributionsTemplatePr
     </div>
   );
 };
+

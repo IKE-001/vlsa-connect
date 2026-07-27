@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { MemberDashboardTemplate } from "@/components/templates/MemberDashboardTemplate/MemberDashboardTemplate";
 import { GroupOnboarding } from "@/components/templates/GroupOnboarding/GroupOnboarding";
 import { LoanVotingPanel } from "@/components/organisms/LoanVotingPanel";
@@ -12,44 +12,21 @@ import { useSavings } from "@/hooks/useSavings";
 import { useLoans } from "@/hooks/useLoans";
 import { useMeetings } from "@/hooks/useMeetings";
 import { useGroup } from "@/hooks/useGroup";
-import { setActiveGroupId, api } from "@/lib/api/client";
+import { useNotifications } from "@/hooks/useNotifications";
+import { setActiveGroupId } from "@/lib/api/client";
+
+function getStoredGroupId(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("vsla_active_group_id") ?? "";
+}
 
 export default function MemberDashboardPage() {
+  const groupId = getStoredGroupId();
+  if (groupId) setActiveGroupId(groupId);
+
   const { profile, isLoading: profileLoading } = useProfile();
-  const [userGroupId, setUserGroupId] = useState<string | null>(null);
-  const [checkingGroups, setCheckingGroups] = useState(true);
 
-  useEffect(() => {
-    async function checkUserGroups() {
-      try {
-        const res = await fetch("/api/groups");
-        const json = await res.json();
-        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-          // User belongs to at least 1 group
-          const storedId = localStorage.getItem("vsla_active_group_id");
-          const belongsToStored = json.data.some((g: any) => g.id === storedId);
-          const activeId: string = (belongsToStored && storedId) ? storedId : json.data[0].id;
-          
-          setActiveGroupId(activeId);
-          setUserGroupId(activeId);
-        } else {
-          // User belongs to NO groups -> clear stale localStorage ID
-          localStorage.removeItem("vsla_active_group_id");
-          setUserGroupId(null);
-        }
-      } catch (err) {
-        console.error("Failed to check user groups:", err);
-      } finally {
-        setCheckingGroups(false);
-      }
-    }
-
-    if (!profileLoading) {
-      checkUserGroups();
-    }
-  }, [profileLoading]);
-
-  if (profileLoading || checkingGroups) {
+  if (profileLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F1F4F2]">
         <div
@@ -60,12 +37,11 @@ export default function MemberDashboardPage() {
     );
   }
 
-  // If user has no active group, render Create or Join Group Onboarding!
-  if (!userGroupId) {
+  if (!groupId) {
     return <GroupOnboarding userName={profile?.fullName} />;
   }
 
-  return <MemberDashboardWithGroup groupId={userGroupId} profile={profile} />;
+  return <MemberDashboardWithGroup groupId={groupId} profile={profile} />;
 }
 
 /** Separated so hooks only run when a real groupId is available */
@@ -76,34 +52,20 @@ function MemberDashboardWithGroup({
   groupId: string;
   profile: ReturnType<typeof useProfile>['profile'];
 }) {
-  const { groupName, members, group, groupHealth, refresh } = useGroup(groupId);
+  const { groupName, members, group, groupHealth } = useGroup(groupId);
   const myMember = members.find((m) => m.userId === profile?.userId);
   const myMemberId = myMember?.id;
   const myRole = myMember?.roleInGroup ?? 'MEMBER';
 
   const { contributions, balanceTambala } = useSavings({ groupId, memberId: myMemberId });
   const { loans, voteLoan } = useLoans({ groupId, callerMemberId: myMemberId });
-  const { meetings, confirmAttendance, scheduleMeeting, refresh: refreshMeetings } = useMeetings(groupId);
+  const { meetings, confirmAttendance } = useMeetings(groupId);
+  const { unreadCount } = useNotifications(20);
 
   const pendingLoans = loans.filter((l) => l.status === 'PENDING');
   const isGovernanceRole = myRole === 'CHAIRPERSON' || myRole === 'TREASURER' || myRole === 'SECRETARY';
-  const isChairperson = myRole === 'CHAIRPERSON';
-  const canSchedule = myRole === 'CHAIRPERSON' || myRole === 'SECRETARY';
 
-  const handleUpdateRole = async (memberId: string, role: string) => {
-    await api.patch(`/api/groups/${groupId}/members/${memberId}/role`, { role });
-    await refresh();
-  };
-
-  const handleScheduleMeeting = async (title: string, scheduledAt: string, location: string, agenda: string) => {
-    await scheduleMeeting({ title, scheduledAt: new Date(scheduledAt).toISOString(), location, agendaNotes: agenda });
-  };
-
-  const handleSaveMinutes = async (meetingId: string, minutes: string) => {
-    await api.post(`/api/meetings/${meetingId}/minutes`, { minutes });
-    await refreshMeetings();
-  };
-
+  // Governance widgets are shown to Chairperson, Treasurer, and Secretary
   const governanceWidgets = isGovernanceRole ? (
     <>
       {groupHealth && (
@@ -117,20 +79,16 @@ function MemberDashboardWithGroup({
       <GroupDirectory
         members={members.map((m) => ({
           id: m.id,
-          fullName: m.fullName,
-          phoneNumber: m.phoneNumber,
-          roleInGroup: m.roleInGroup,
+          name: m.fullName,
+          phone: m.phoneNumber,
+          role: m.roleInGroup,
           avatarUrl: m.avatarUrl,
           email: null,
         }))}
-        isChairperson={isChairperson}
-        onUpdateRole={handleUpdateRole}
       />
       <UpcomingMeetings
         meetings={meetings}
-        onRSVP={(id) => { void confirmAttendance(id, myMemberId ?? ''); }}
-        onScheduleMeeting={canSchedule ? handleScheduleMeeting : undefined}
-        onSaveMinutes={canSchedule ? handleSaveMinutes : undefined}
+        onRSVP={(id) => { if (myMemberId) void confirmAttendance(id, myMemberId); }}
       />
     </>
   ) : undefined;
@@ -157,6 +115,7 @@ function MemberDashboardWithGroup({
       meetings={meetings}
       totalGroupSavings={group?.totalPoolTambala ?? 0}
       governanceWidgets={governanceWidgets}
+      unreadCount={unreadCount}
     />
   );
 }

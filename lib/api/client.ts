@@ -2,9 +2,13 @@
  * lib/api/client.ts
  *
  * Typed fetch wrapper for all frontend → backend calls.
- * - Automatically reads activeGroupId from localStorage
- * - Sends x-active-group-id header on every request (required by resolveGroupMember)
- * - Returns { data } on success, throws ApiError on failure
+ *
+ * Auto-injects on every request:
+ *   x-active-group-id    — from localStorage (required by all group-scoped APIs)
+ *   x-caller-group-role  — from localStorage (required by role guards on the server)
+ *   x-caller-member-id   — from localStorage (required by member-scoped writes)
+ *
+ * Call setActiveGroup({ id, role, memberId }) after login / group hydration.
  */
 
 export class ApiError extends Error {
@@ -31,16 +35,44 @@ interface ApiFailure {
 
 type ApiResult<T> = ApiSuccess<T> | ApiFailure;
 
-function getActiveGroupId(): string {
+// ── LocalStorage key constants ────────────────────────────────────────────
+const KEY_GROUP_ID    = 'vsla_active_group_id';
+const KEY_GROUP_ROLE  = 'vsla_caller_group_role';
+const KEY_MEMBER_ID   = 'vsla_caller_member_id';
+
+function ls(key: string): string {
   if (typeof window === 'undefined') return '';
-  return localStorage.getItem('vsla_active_group_id') ?? '';
+  return localStorage.getItem(key) ?? '';
 }
+
+// ── Group context setters (call after login + group hydration) ────────────
 
 export function setActiveGroupId(groupId: string) {
   if (typeof window !== 'undefined') {
-    localStorage.setItem('vsla_active_group_id', groupId);
+    localStorage.setItem(KEY_GROUP_ID, groupId);
   }
 }
+
+export function setCallerGroupRole(role: string) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(KEY_GROUP_ROLE, role);
+  }
+}
+
+export function setCallerMemberId(memberId: string) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(KEY_MEMBER_ID, memberId);
+  }
+}
+
+/** Convenience: set all group context values at once. */
+export function setActiveGroup(ctx: { id: string; role: string; memberId: string }) {
+  setActiveGroupId(ctx.id);
+  setCallerGroupRole(ctx.role);
+  setCallerMemberId(ctx.memberId);
+}
+
+// ── Core fetch wrapper ────────────────────────────────────────────────────
 
 async function request<T>(
   path: string,
@@ -51,8 +83,13 @@ async function request<T>(
     ...(options.headers as Record<string, string>),
   };
 
-  const groupId = getActiveGroupId();
-  if (groupId) headers['x-active-group-id'] = groupId;
+  const groupId   = ls(KEY_GROUP_ID);
+  const groupRole = ls(KEY_GROUP_ROLE);
+  const memberId  = ls(KEY_MEMBER_ID);
+
+  if (groupId)   headers['x-active-group-id']   = groupId;
+  if (groupRole) headers['x-caller-group-role']  = groupRole;
+  if (memberId)  headers['x-caller-member-id']   = memberId;
 
   const res = await fetch(path, { ...options, headers });
   const json: ApiResult<T> = await res.json();
