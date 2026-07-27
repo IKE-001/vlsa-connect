@@ -16,11 +16,17 @@ export default function MemberProfilePage() {
   if (groupId) setActiveGroupId(groupId);
 
   const { profile, isLoading } = useProfile();
-  const { groupName } = useGroup(groupId);
+  const { groupName, members } = useGroup(groupId);
+
+  // Find the current user's role in the group from members list
+  const myMembership = members.find((m) => m.userId === profile?.userId);
+  const enrichedProfile = profile
+    ? { ...profile, roleInGroup: myMembership?.roleInGroup ?? profile.platformRole }
+    : null;
 
   return (
     <MemberProfileTemplate
-      profile={profile}
+      profile={enrichedProfile}
       groupName={groupName}
       isLoading={isLoading}
     />

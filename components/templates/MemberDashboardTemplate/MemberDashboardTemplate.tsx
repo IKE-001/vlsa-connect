@@ -1,6 +1,7 @@
 "use client";
 import { MobileBottomNav } from "@/components/organisms/MobileBottomNav/MobileBottomNav";
 import React, { useState } from "react";
+import Link from "next/link";
 import { Icon } from "@/components/atoms/Icon/Icon";
 import { MemberSidebar } from "@/components/organisms/MemberSidebar/MemberSidebar";
 import { StatCard } from "@/components/molecules/StatCard/StatCard";
@@ -249,18 +250,18 @@ export const MemberDashboardTemplate: React.FC<MemberDashboardTemplateProps> = (
             <div className="text-[14.5px] font-bold text-[#1B2321] mb-3.5">Quick Actions</div>
             <div className="flex justify-between">
               {[
-                { icon: "arrow-down-circle" as const, label: "Make\nContribution", bg: "bg-[#E3F3EA]", color: "text-[#2D7A52]" },
-                { icon: "arrow-up-circle" as const, label: "Request\nLoan", bg: "bg-[#E6EEFA]", color: "text-[#4A7FC1]" },
-                { icon: "vote" as const, label: "Vote &\nApprovals", bg: "bg-[#EFE9F9]", color: "text-[#8B6FC7]" },
-                { icon: "doc" as const, label: "Group\nDocuments", bg: "bg-[#FCEADC]", color: "text-[#E8873A]" },
-                { icon: "chat" as const, label: "Chat", bg: "bg-[#E3F3EA]", color: "text-[#2D7A52]" },
+                { icon: "arrow-down-circle" as const, label: "Make\nContribution", bg: "bg-[#E3F3EA]", color: "text-[#2D7A52]", href: "/contributions" },
+                { icon: "arrow-up-circle" as const, label: "Request\nLoan", bg: "bg-[#E6EEFA]", color: "text-[#4A7FC1]", href: "/loans" },
+                { icon: "vote" as const, label: "Vote &\nApprovals", bg: "bg-[#EFE9F9]", color: "text-[#8B6FC7]", href: "/loans" },
+                { icon: "doc" as const, label: "Group\nDocuments", bg: "bg-[#FCEADC]", color: "text-[#E8873A]", href: "/documents" },
+                { icon: "chat" as const, label: "Chat", bg: "bg-[#E3F3EA]", color: "text-[#2D7A52]", href: "/chat" },
               ].map((qa) => (
-                <button key={qa.label} className="flex flex-col items-center gap-1.5 w-[19%] active:scale-95 transition-transform cursor-pointer">
+                <Link key={qa.label} href={qa.href} className="flex flex-col items-center gap-1.5 w-[19%] active:scale-95 transition-transform cursor-pointer">
                   <div className={`w-12 h-12 rounded-[14px] flex items-center justify-center ${qa.bg} ${qa.color} shadow-xs`}>
                     <Icon name={qa.icon} className="w-5 h-5" />
                   </div>
                   <span className="text-[10.5px] font-semibold text-[#5B6B65] text-center leading-[1.2] whitespace-pre-line">{qa.label}</span>
-                </button>
+                </Link>
               ))}
             </div>
           </div>

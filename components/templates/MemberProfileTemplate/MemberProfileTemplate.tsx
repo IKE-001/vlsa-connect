@@ -50,7 +50,7 @@ export const MemberProfileTemplate: React.FC<MemberProfileTemplateProps> = ({
                 <h2 className="text-[18px] font-extrabold text-[#1B2321]">{fullName}</h2>
                 <Badge variant="green" dot>Verified Member</Badge>
               </div>
-              <p className="text-[12.5px] text-[#5B6B65] mt-0.5">{groupName || "VSLA Group"} · Member</p>
+              <p className="text-[12.5px] text-[#5B6B65] mt-0.5">{groupName || "VSLA Group"} · {profile?.roleInGroup ?? profile?.platformRole ?? "Member"}</p>
             </div>
             <Button theme="green" variant="outline">Edit Photo</Button>
           </div>
@@ -65,7 +65,8 @@ export const MemberProfileTemplate: React.FC<MemberProfileTemplateProps> = ({
                 <Input label="Full Name" defaultValue={fullName} theme="green" fullWidth />
                 <Input label="Phone Number" defaultValue={phone} theme="green" fullWidth />
                 <Input label="Email" defaultValue={profile?.email ?? ""} theme="green" fullWidth />
-                <Input label="Home Address" defaultValue="" theme="green" fullWidth />
+                <Input label="Role" defaultValue={profile?.roleInGroup ?? profile?.platformRole ?? "Member"} theme="green" fullWidth />
+                <Input label="Home Address" defaultValue={profile?.homeAddress ?? ""} theme="green" fullWidth />
               </div>
               <div className="flex justify-end mt-2">
                 <Button theme="green">Save Changes</Button>
@@ -103,7 +104,7 @@ export const MemberProfileTemplate: React.FC<MemberProfileTemplateProps> = ({
           </div>
 
           <h2 className="text-[20px] font-extrabold text-[#1B2321] mt-3">{fullName}</h2>
-          <p className="text-[12.5px] text-[#5B6B65] mt-0.5">{groupName || "VSLA Group"} · Member</p>
+          <p className="text-[12.5px] text-[#5B6B65] mt-0.5">{groupName || "VSLA Group"} · {profile?.roleInGroup ?? profile?.platformRole ?? "Member"}</p>
           <p className="text-[12px] font-mono text-[#94A29C] mt-1 bg-[#F1F4F2] px-3 py-1 rounded-full">{profile?.userId ? `ID: ${profile.userId.substring(0, 12)}` : "Loading…"}</p>
         </div>
 

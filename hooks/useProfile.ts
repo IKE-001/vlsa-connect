@@ -17,6 +17,8 @@ export interface UserProfile extends SessionUser {
   phoneNumber?: string;
   email?: string | null;
   avatarUrl?: string | null;
+  roleInGroup?: string;
+  homeAddress?: string | null;
 }
 
 interface ProfileState {

@@ -16,9 +16,15 @@ export default function SavingsGoalPage() {
   if (groupId) setActiveGroupId(groupId);
 
   const { profile } = useProfile();
+
+  // Fetch both balance (with memberId) AND contribution history (without memberId)
   const { balanceTambala } = useSavings({ groupId, memberId: profile?.userId });
+  const { contributions } = useSavings({ groupId }); // history list
 
   return (
-    <MemberSavingsGoalTemplate savedTambala={balanceTambala ?? 0} />
+    <MemberSavingsGoalTemplate
+      savedTambala={balanceTambala ?? 0}
+      contributions={contributions}
+    />
   );
 }
