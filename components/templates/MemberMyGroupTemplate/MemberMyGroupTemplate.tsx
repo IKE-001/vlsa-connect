@@ -1,6 +1,6 @@
 "use client";
 import { MobileBottomNav } from "@/components/organisms/MobileBottomNav/MobileBottomNav";
-import React from "react";
+import React, { useState } from "react";
 import { MemberSidebar } from "@/components/organisms/MemberSidebar/MemberSidebar";
 import { Badge } from "@/components/atoms/Badge/Badge";
 import { Button } from "@/components/atoms/Button/Button";
@@ -38,6 +38,9 @@ export interface MemberMyGroupTemplateProps {
   meetings: MeetingRecord[];
   groupHealth: HealthScoreBreakdown | null;
   isLoading: boolean;
+  currentUserId?: string;
+  currentUserRole?: string;
+  onUpdateRole?: (memberId: string, role: string) => Promise<void>;
 }
 
 const AVATAR_THEMES = ["green", "blue", "purple", "orange", "red", "gray"] as const;
@@ -45,23 +48,39 @@ const getTheme = (index: number) => AVATAR_THEMES[index % AVATAR_THEMES.length];
 const getInitials = (name: string) =>
   (name || "User").split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
 
+const ASSIGNABLE_ROLES = ["MEMBER", "TREASURER", "SECRETARY"];
+
 export const MemberMyGroupTemplate: React.FC<MemberMyGroupTemplateProps> = ({
   group,
   members,
   meetings,
   groupHealth,
   isLoading,
+  currentUserId,
+  currentUserRole,
+  onUpdateRole,
 }) => {
+  const [updatingMemberId, setUpdatingMemberId] = useState<string | null>(null);
   const nextMeeting = meetings.find((m) => m.status === "SCHEDULED");
   const groupName = group?.name ?? "Your Group";
   const inviteCode = group?.inviteCode ?? "—";
+  const isChairperson = currentUserRole === "CHAIRPERSON";
+
+  const handleRoleChange = async (memberId: string, newRole: string) => {
+    if (!onUpdateRole) return;
+    setUpdatingMemberId(memberId);
+    try {
+      await onUpdateRole(memberId, newRole);
+    } finally {
+      setUpdatingMemberId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F1F4F2] font-sans antialiased flex flex-col md:flex-row">
       <div className="hidden md:block"><MemberSidebar activePath="/my-group" /></div>
       <div className="flex-1 min-w-0 flex flex-col">
 
-        {/* Sticky header */}
         <header className="bg-white/90 backdrop-blur-md sticky top-0 z-20 border-b border-[#E9EDEA] px-7 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-[19px] font-extrabold text-[#1B2321]">My Group</h1>
@@ -70,7 +89,6 @@ export const MemberMyGroupTemplate: React.FC<MemberMyGroupTemplateProps> = ({
           <Badge variant="green" dot>Active Group</Badge>
         </header>
 
-        {/* Scrollable main */}
         <main className="flex-1 overflow-y-auto p-4 md:p-7 flex flex-col gap-5 pb-12">
 
           {/* Group banner */}
@@ -111,7 +129,14 @@ export const MemberMyGroupTemplate: React.FC<MemberMyGroupTemplateProps> = ({
           <div className="bg-white rounded-[18px] shadow-[0_2px_10px_rgba(18,58,41,0.04)] border border-[#E9EDEA] overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-[#E9EDEA]">
               <h2 className="text-[15px] font-extrabold text-[#1B2321]">Group Members</h2>
-              <span className="text-[12px] text-[#94A29C] font-semibold">{members.length} total</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] text-[#94A29C] font-semibold">{members.length} total</span>
+                {isChairperson && (
+                  <span className="text-[11px] bg-[#E3F3EA] text-[#2D7A52] font-bold px-2 py-0.5 rounded-full">
+                    Chairperson — can assign roles
+                  </span>
+                )}
+              </div>
             </div>
             <div className="overflow-x-auto">
               {isLoading && <div className="py-8 text-center text-sm text-[#94A29C]">Loading members…</div>}
@@ -126,6 +151,7 @@ export const MemberMyGroupTemplate: React.FC<MemberMyGroupTemplateProps> = ({
                       <th className="px-5 py-3">Role</th>
                       <th className="px-5 py-3">Phone</th>
                       <th className="px-5 py-3">Status</th>
+                      {isChairperson && <th className="px-5 py-3">Assign Role</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -137,11 +163,39 @@ export const MemberMyGroupTemplate: React.FC<MemberMyGroupTemplateProps> = ({
                             <span className="font-semibold text-[#1B2321]">{m.fullName}</span>
                           </div>
                         </td>
-                        <td className="px-5 py-3.5 text-[#5B6B65] font-medium">{m.roleInGroup}</td>
+                        <td className="px-5 py-3.5">
+                          <span className={`text-[12px] font-bold px-2 py-0.5 rounded-full ${
+                            m.roleInGroup === "CHAIRPERSON" ? "bg-[#E3F3EA] text-[#2D7A52]" :
+                            m.roleInGroup === "TREASURER"   ? "bg-blue-50 text-blue-600" :
+                            m.roleInGroup === "SECRETARY"   ? "bg-purple-50 text-purple-600" :
+                            "bg-gray-100 text-gray-600"
+                          }`}>
+                            {m.roleInGroup}
+                          </span>
+                        </td>
                         <td className="px-5 py-3.5 text-[#5B6B65]">{m.phoneNumber}</td>
                         <td className="px-5 py-3.5">
                           <Badge variant={m.status === "ACTIVE" ? "green" : "red"} size="sm" dot>{m.status}</Badge>
                         </td>
+                        {isChairperson && (
+                          <td className="px-5 py-3.5">
+                            {/* Cannot reassign Chairperson — use transfer ownership */}
+                            {m.roleInGroup === "CHAIRPERSON" || m.userId === currentUserId ? (
+                              <span className="text-[11px] text-[#94A29C]">—</span>
+                            ) : (
+                              <select
+                                value={m.roleInGroup}
+                                disabled={updatingMemberId === m.id}
+                                onChange={(e) => handleRoleChange(m.id, e.target.value)}
+                                className="text-[12px] font-semibold border border-[#E9EDEA] rounded-[8px] px-2 py-1 text-[#1B2321] bg-white focus:outline-none focus:border-[#2D7A52] transition-colors disabled:opacity-50"
+                              >
+                                {ASSIGNABLE_ROLES.map((r) => (
+                                  <option key={r} value={r}>{r}</option>
+                                ))}
+                              </select>
+                            )}
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -159,7 +213,7 @@ export const MemberMyGroupTemplate: React.FC<MemberMyGroupTemplateProps> = ({
               )}
               {meetings.filter(m => m.status === "SCHEDULED").map((meeting) => (
                 <div key={meeting.id} className="flex items-start gap-2.5 py-2.5 border-b border-[#F1F4F2] last:border-0">
-                  <span className="w-5 h-5 rounded-full bg-[#E3F3EA] text-[#2D7A52] flex items-center justify-center text-[10px] font-extrabold shrink-0 mt-0.5">📅</span>
+                  <span className="w-5 h-5 rounded-full bg-[#E3F3EA] text-[#2D7A52] flex items-center justify-center text-[10px] font-extrabold shrink-0 mt-0.5">C</span>
                   <div>
                     <div className="text-[13px] text-[#1B2321] font-semibold">{meeting.title}</div>
                     <div className="text-[11.5px] text-[#5B6B65]">{format(parseISO(meeting.scheduledAt), "EEE, d MMM yyyy · p")}</div>
@@ -176,4 +230,3 @@ export const MemberMyGroupTemplate: React.FC<MemberMyGroupTemplateProps> = ({
     </div>
   );
 };
-

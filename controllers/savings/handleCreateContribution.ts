@@ -31,16 +31,19 @@ export async function handleCreateContribution(
     select: { userId: true },
   });
 
-  const isSelfService = (input.method === 'MOBILE_MONEY' || input.method === 'CARD') && member?.userId === callerUserId;
+  // A member can log their own contribution regardless of method (cash or online).
+  // Only a TREASURER can log a contribution on behalf of someone else.
+  const isSelfService = member?.userId === callerUserId;
 
-  // Group-role guard — only GroupRole.TREASURER may log contributions unless it's self-service online payment.
+  // Group-role guard — only GroupRole.TREASURER may log contributions unless it's self-service.
   if (callerGroupRole !== 'TREASURER' && !isSelfService) {
     return {
       success: false,
-      error: 'Only a Treasurer can record a contribution, or members can initiate their own online payments.',
+      error: 'Only a Treasurer can record a contribution on behalf of another member.',
       code: 'FORBIDDEN',
     };
   }
+
 
   // Create contribution (starts as PENDING)
   const contribution = await createContribution({
