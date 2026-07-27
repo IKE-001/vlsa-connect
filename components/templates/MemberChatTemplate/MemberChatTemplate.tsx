@@ -65,10 +65,10 @@ export const MemberChatTemplate: React.FC<MemberChatTemplateProps> = ({
 
   // Get initials from sender name
   const getInitials = (name: string) =>
-    (name || "User").split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
+    (name || "User").split(" ").filter(Boolean).map((n) => n[0]).join("").substring(0, 2).toUpperCase();
 
   const THEMES = ["green", "blue", "purple", "orange", "red"] as const;
-  const getTheme = (id: string) => THEMES[id.charCodeAt(0) % THEMES.length];
+  const getTheme = (id?: string) => THEMES[(id ?? "x").charCodeAt(0) % THEMES.length];
 
   return (
     <div className="min-h-screen bg-[#F1F4F2] font-sans antialiased flex flex-col md:flex-row">

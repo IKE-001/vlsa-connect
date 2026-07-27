@@ -30,9 +30,9 @@ export interface MemberMessagesTemplateProps {
 }
 
 const THEMES = ["green", "blue", "purple", "orange", "red"] as const;
-const getTheme = (id: string) => THEMES[id.charCodeAt(0) % THEMES.length];
+const getTheme = (id?: string) => THEMES[(id ?? "x").charCodeAt(0) % THEMES.length];
 const getInitials = (name: string) =>
-  (name || "User").split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
+  (name || "User").split(" ").filter(Boolean).map((n) => n[0]).join("").substring(0, 2).toUpperCase();
 
 export const MemberMessagesTemplate: React.FC<MemberMessagesTemplateProps> = ({
   messages,
@@ -120,7 +120,7 @@ export const MemberMessagesTemplate: React.FC<MemberMessagesTemplateProps> = ({
                 </div>
                 
                 <span className={`text-[10px] font-semibold mt-1 ${isMe ? "mr-1 text-[#94A29C]" : "ml-1 text-[#94A29C]"}`}>
-                  {format(parseISO(msg.createdAt), "h:mm a")}
+                  {msg.createdAt ? format(parseISO(msg.createdAt), "h:mm a") : ""}
                 </span>
               </div>
             </div>
