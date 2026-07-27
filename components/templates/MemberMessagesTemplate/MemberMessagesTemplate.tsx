@@ -32,7 +32,7 @@ export interface MemberMessagesTemplateProps {
 const THEMES = ["green", "blue", "purple", "orange", "red"] as const;
 const getTheme = (id: string) => THEMES[id.charCodeAt(0) % THEMES.length];
 const getInitials = (name: string) =>
-  name.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
+  (name || "User").split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
 
 export const MemberMessagesTemplate: React.FC<MemberMessagesTemplateProps> = ({
   messages,

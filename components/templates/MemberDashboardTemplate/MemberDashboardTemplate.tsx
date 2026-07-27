@@ -43,7 +43,7 @@ export const MemberDashboardTemplate: React.FC<MemberDashboardTemplateProps> = (
 
   // Derived data
   const userName = user?.fullName || "Member";
-  const userInitials = userName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+  const userInitials = (userName || "User").split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
   const nextMeeting = meetings.find((m) => m.status === "SCHEDULED");
   
   // MemberBalanceSummary only tracks contributions — total saved == total contributed
@@ -71,7 +71,7 @@ export const MemberDashboardTemplate: React.FC<MemberDashboardTemplateProps> = (
         {/* ────── DESKTOP TOPBAR ────── */}
         <header className="hidden md:flex bg-white/90 backdrop-blur-md sticky top-0 z-20 border-b border-[#E9EDEA] px-7 py-4 items-center justify-between shadow-xs">
           <div>
-            <h1 className="text-[19px] font-extrabold text-[#1B2321] tracking-tight">Welcome back, {userName.split(" ")[0]} 👋</h1>
+            <h1 className="text-[19px] font-extrabold text-[#1B2321] tracking-tight">Welcome back, {(userName || "User").split(" ")[0]} 👋</h1>
             <p className="text-[12.5px] text-[#5B6B65] mt-0.5 font-medium">Here&apos;s what&apos;s happening in your group today.</p>
           </div>
           <div className="flex items-center gap-4">

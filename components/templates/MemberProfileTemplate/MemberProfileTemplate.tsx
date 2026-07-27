@@ -26,7 +26,7 @@ export const MemberProfileTemplate: React.FC<MemberProfileTemplateProps> = ({
 
   const fullName = profile?.fullName ?? "Member";
   const phone = profile?.phoneNumber ?? "";
-  const initials = fullName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+  const initials = (fullName || "User").split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
 
   return (
     <div className="min-h-screen font-sans antialiased flex flex-col md:flex-row bg-[#F1F4F2]">

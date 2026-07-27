@@ -43,7 +43,7 @@ export interface MemberMyGroupTemplateProps {
 const AVATAR_THEMES = ["green", "blue", "purple", "orange", "red", "gray"] as const;
 const getTheme = (index: number) => AVATAR_THEMES[index % AVATAR_THEMES.length];
 const getInitials = (name: string) =>
-  name.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
+  (name || "User").split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
 
 export const MemberMyGroupTemplate: React.FC<MemberMyGroupTemplateProps> = ({
   group,

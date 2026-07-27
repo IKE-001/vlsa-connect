@@ -65,7 +65,7 @@ export const MemberChatTemplate: React.FC<MemberChatTemplateProps> = ({
 
   // Get initials from sender name
   const getInitials = (name: string) =>
-    name.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
+    (name || "User").split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
 
   const THEMES = ["green", "blue", "purple", "orange", "red"] as const;
   const getTheme = (id: string) => THEMES[id.charCodeAt(0) % THEMES.length];

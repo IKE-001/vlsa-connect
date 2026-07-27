@@ -14,7 +14,7 @@ export interface BankerProfileTemplateProps {
 
 export const BankerProfileTemplate: React.FC<BankerProfileTemplateProps> = ({ profile }) => {
   const name = profile.fullName || "Bank Officer";
-  const initials = name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() || "BO";
+  const initials = (name || "Banker").split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() || "BO";
   const email = profile.email || "No email linked";
 
   return (
