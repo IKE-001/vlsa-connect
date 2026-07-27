@@ -49,10 +49,12 @@ function MemberDashboardWithGroup({
   groupId: string;
   profile: ReturnType<typeof useProfile>['profile'];
 }) {
-  const { contributions, balanceTambala } = useSavings({ groupId, memberId: profile?.userId });
-  const { loans } = useLoans({ groupId, callerMemberId: profile?.userId });
-  const { meetings } = useMeetings(groupId);
   const { groupName, members, group } = useGroup(groupId);
+  const myMemberId = members.find((m) => m.userId === profile?.userId)?.id;
+  
+  const { contributions, balanceTambala } = useSavings({ groupId, memberId: myMemberId });
+  const { loans } = useLoans({ groupId, callerMemberId: myMemberId });
+  const { meetings } = useMeetings(groupId);
 
   return (
     <MemberDashboardTemplate

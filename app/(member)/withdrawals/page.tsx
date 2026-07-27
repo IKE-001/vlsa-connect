@@ -5,6 +5,7 @@ import { MemberWithdrawalsTemplate } from "@/components/templates/MemberWithdraw
 import { useProfile } from "@/hooks/useProfile";
 import { useWithdrawals } from "@/hooks/useWithdrawals";
 import { useSavings } from "@/hooks/useSavings";
+import { useGroup } from "@/hooks/useGroup";
 import { setActiveGroupId } from "@/lib/api/client";
 
 function getStoredGroupId(): string {
@@ -17,12 +18,17 @@ export default function MemberWithdrawalsPage() {
   if (groupId) setActiveGroupId(groupId);
 
   const { profile } = useProfile();
+  const { members } = useGroup(groupId);
+
+  const myMemberId = members.find((m) => m.userId === profile?.userId)?.id;
+
   const { withdrawals, isLoading, requestWithdrawal, voteWithdrawal } = useWithdrawals({
     groupId,
-    memberId: profile?.userId,
-    callerMemberId: profile?.userId,
+    memberId: myMemberId,
+    callerMemberId: myMemberId,
   });
-  const { balanceTambala } = useSavings({ groupId, memberId: profile?.userId });
+  
+  const { balanceTambala } = useSavings({ groupId, memberId: myMemberId });
 
   const handleRequest = async (amountTambala: number, reason: string) => {
     await requestWithdrawal(amountTambala, reason);

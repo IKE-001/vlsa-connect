@@ -3,6 +3,7 @@
 import React from "react";
 import { MemberLoansTemplate } from "@/components/templates/MemberLoansTemplate/MemberLoansTemplate";
 import { useProfile } from "@/hooks/useProfile";
+import { useGroup } from "@/hooks/useGroup";
 import { useLoans } from "@/hooks/useLoans";
 import { setActiveGroupId } from "@/lib/api/client";
 
@@ -16,10 +17,14 @@ export default function MemberLoansPage() {
   if (groupId) setActiveGroupId(groupId);
 
   const { profile } = useProfile();
+  const { members } = useGroup(groupId);
+
+  const myMemberId = members.find((m) => m.userId === profile?.userId)?.id;
+
   const { loans, isLoading, applyLoan, repayLoan } = useLoans({
     groupId,
-    memberId: profile?.userId,
-    callerMemberId: profile?.userId,
+    memberId: myMemberId,
+    callerMemberId: myMemberId,
   });
 
   const handleApply = async (principalTambala: number) => {

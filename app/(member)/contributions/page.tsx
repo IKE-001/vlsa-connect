@@ -18,19 +18,20 @@ export default function MemberContributionsPage() {
 
   const { profile } = useProfile();
   const { members } = useGroup(groupId);
+  
+  const myMember = members.find((m) => m.userId === profile?.userId);
+  const myMemberId = myMember?.id;
+
   const { contributions, balanceTambala, isLoading, logContribution } = useSavings({
     groupId,
-    memberId: profile?.userId,
+    memberId: myMemberId,
   });
 
   const handleContribute = async (amountTambala: number, phone: string, method: "MOBILE_MONEY" | "CASH") => {
-    // Find the caller's GroupMember.id
-    const myMember = members.find((m) => m.userId === profile?.userId);
-    if (!myMember) return;
+    if (!myMemberId) return;
 
-    const result = await logContribution(myMember.id, amountTambala, method);
+    const result = await logContribution(myMemberId, amountTambala, method);
 
-    // If online payment — redirect to PayChangu checkout
     if (result.checkoutUrl) {
       window.location.href = result.checkoutUrl;
     }
